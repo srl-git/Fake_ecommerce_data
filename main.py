@@ -2,46 +2,78 @@ import numpy as np
 
 ENTRIES = 10
 
-# product sku, item qty, order qty
+# product sku, item qty, order qty, username, user email
 
-def generate_product_skus(label_prefix,count):
-    product_skus = [f"{label_prefix}{i:03d}" for i in range(1,count)]
-    return product_skus
+class Products:
 
-def generate_order_qty(max_qty):
-    order_qty = np.random.randint(1,max_qty)
-    return order_qty
+    def __init__(self,label_prefix,entries):
+        self.label_prefix = label_prefix
+        self.entries = entries
+        self.skus = [f"{self.label_prefix}{i:03d}" for i in range(1,self.entries + 1)]
+        self.weighting = [round(np.random.rand(),2) for i in range(0,self.entries)]
+        self.prices = [int(np.random.choice([18,19,20,21])) for i in range(0,self.entries)]
 
-def generate_line_qty():
+
+def generate_num_items(max_num_items):
+    num_items = np.random.randint(1,max_num_items)
+    return num_items
+
+def generate_item_qty():
     range = np.arange(1, 6)
     weights = np.exp(-0.7 * (range - 1))
     probabilities = weights / weights.sum()   
     line_qty = int(np.random.choice(range,p=probabilities))
     return line_qty
 
+# def generate_order(product_skus,max_num_items):
+#     items_in_order = generate_num_items(max_num_items)
+#     random_product_list = []
+#     random_item_qty_list = []
 
-def generate_order(max_num_items):
-    items_in_order = generate_order_qty(max_num_items)
+#     for i in range(items_in_order):
+
+#         random_product = str(np.random.choice(product_skus))
+        
+#         if random_product in random_product_list:
+#             continue
+#         else: 
+#             random_product_list.append(random_product)
+
+#         random_item_qty = generate_item_qty()
+#         random_item_qty_list.append(random_item_qty)
+
+#     order = list(zip(random_product_list,random_item_qty_list))
+#     return order
+
+def generate_order(products,max_num_items):
+    
+    items_in_order = generate_num_items(max_num_items)
     random_product_list = []
-    random_line_qty_list = []
+    random_item_qty_list = []
+
+    weights = np.array(products.weighting)
+    probabilities = weights / weights.sum()
+
     for i in range(items_in_order):
-        random_product = str(np.random.choice(list_product_sku))
+
+        random_product = str(np.random.choice(products.skus,p=probabilities))
+        
         if random_product in random_product_list:
             continue
-        else: random_product_list.append(random_product)
-        random_line_qty = generate_line_qty()
-        random_line_qty_list.append(random_line_qty)
-    order_entry = list(zip(random_product_list,random_line_qty_list))
-    return order_entry
+        else: 
+            random_product_list.append(random_product)
 
-list_product_sku = generate_product_skus("FADE",30)
-# print(list_product_sku)
+        random_item_qty = generate_item_qty()
+        random_item_qty_list.append(random_item_qty)
 
-# order_qty = generate_order_qty(5,ENTRIES)
-# print(order_qty)
+    order = list(zip(random_product_list,random_item_qty_list))
+    return order
 
-# line_qty = generate_line_qty(ENTRIES)
-# print(line_qty)
 
-order_example = generate_order(max_num_items=5)
-print(order_example)
+products = Products("WARP",ENTRIES)
+all_products = [(products.skus[i],products.prices[i],products.weighting[i]) for i in range(products.entries)]
+
+for i in range(30):
+
+    order = generate_order(products,max_num_items=5)
+    print(order)
