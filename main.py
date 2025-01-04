@@ -2,10 +2,14 @@ from faker import Faker
 import csv
 import random
 
-LABEL_PREFIX = 'SDT'
+LABEL_PREFIX = 'DARE'
 NUM_PRODUCTS = 100
-NUM_ORDERS = 50000
+
 NUM_USERS = 45000
+LOCALES = ['en_GB','en_US','fr_FR','en_CA','de_DE']
+
+NUM_ORDERS = 50000
+
 
 class Products:
 
@@ -25,11 +29,11 @@ class Products:
             product = (self.skus[i], self.prices[i])
             self.products.append(product)
 
-    def to_csv(self):
+    def to_csv(self,file_path='product_data.csv'):
 
-        file_path = 'product_data.csv'
+        self.file_path = file_path
 
-        with open(file_path, mode='w', newline='') as file:
+        with open(self.file_path, mode='w', newline='') as file:
             writer = csv.writer(file)
             
             writer.writerow(['Product SKU', 'Price'])
@@ -39,10 +43,10 @@ class Products:
 
 class Users:
 
-    def __init__(self,num_users):
+    def __init__(self,num_users,locales):
         
         self.num_users = num_users
-        locales = ['en_GB','en_US','fr_FR','en_CA','de_DE']
+        self.locales = locales
 
         self.users = []
 
@@ -59,11 +63,11 @@ class Users:
             user = (user_id, name, address, country, email)
             self.users.append(user)
 
-    def to_csv(self):
+    def to_csv(self,file_path='customer_data.csv'):
 
-        file_path = 'customer_data.csv'
+        self.file_path = file_path
 
-        with open(file_path, mode='w', newline='') as file:
+        with open(self.file_path, mode='w', newline='') as file:
             writer = csv.writer(file)
             
             writer.writerow(['User ID', 'Name', 'Address', 'Country', 'Email'])
@@ -100,7 +104,7 @@ class Orders:
 
             order_lines = {}
 
-            for i in range(items_in_order):
+            for j in range(items_in_order):
 
                 random_product = random.choices(products.skus,weights=self.products.popularity)[0]
 
@@ -119,11 +123,11 @@ class Orders:
                 self.simple_orders.append(simple_order)
 
 
-    def to_csv(self,detailed=True):
+    def to_csv(self,detailed=True,file_path = 'orders.csv'):
 
-        file_path = 'orders.csv'
+        self.file_path = file_path
 
-        with open(file_path, mode='w', newline='') as file:
+        with open(self.file_path, mode='w', newline='') as file:
             writer = csv.writer(file)
             
             if detailed:
@@ -138,9 +142,9 @@ class Orders:
                 for row in self.simple_orders:
                     writer.writerow(row)
 
-products = Products(label_prefix=LABEL_PREFIX,entries=NUM_PRODUCTS)
-customers = Users(num_users=NUM_USERS)
-orders = Orders(num_orders=NUM_ORDERS,users=customers,products=products,max_num_items=5)
+products = Products(label_prefix=LABEL_PREFIX, entries=NUM_PRODUCTS)
+customers = Users(num_users=NUM_USERS, locales=LOCALES)
+orders = Orders(num_orders=NUM_ORDERS, users=customers, products=products, max_num_items=5)
 
 products.to_csv()
 customers.to_csv()
