@@ -1,86 +1,141 @@
+from faker import Faker
 import numpy as np
 import csv
+import random
 
-NUM_PRODUCTS = 35
-NUM_ORDERS = 10000
-
-# product sku, product price, product popularity, product name
-# order ID, items in order, qty items in order, username, user email, address
-# username, user email
+NUM_PRODUCTS = 60
+NUM_ORDERS = 100
+NUM_USERS = 90
 
 
 class Products:
 
     def __init__(self,label_prefix,entries):
+
         self.label_prefix = label_prefix
         self.entries = entries
-        self.skus = [f"{self.label_prefix}{i:03d}" for i in range(1,self.entries + 1)]
+        self.skus = [f"{self.label_prefix}{i:03}" for i in range(1,self.entries + 1)]
         weighting = np.random.rand(self.entries)
         self.popularity = weighting / weighting.sum()
-        self.prices = [int(np.random.choice([18,19,20,21])) for i in range(0,self.entries)]
+        self.prices = [random.choice([18,19,20,21]) for i in range(0,self.entries)]
         self.price = {sku: price for sku, price in zip(self.skus, self.prices)}
-
-
-def generate_num_items(max_num_items):
-    num_items = np.random.randint(1,max_num_items)
-    return num_items
-
-def generate_orders(num_orders,products,max_num_items):
-    
-    orders = []
-
-    for i in range(num_orders):
-
-        order_id = f'{(i + 1):03}'
-
-        items_in_order = generate_num_items(max_num_items)
-
-        order = {}
-
-        for i in range(items_in_order):
-
-            random_product = str(np.random.choice(products.skus,p=products.popularity))
-            
-            if random_product in order:
-                order[random_product] += 1
-            else:
-                order[random_product] = 1
         
-        orders.append(order)
+        self.products = []
 
-    return orders
+        for i in range(entries):
+            product = (self.skus[i], self.prices[i])
+            self.products.append(product)
 
+    def to_csv(self):
 
-warp_products = Products("WARP",NUM_PRODUCTS)
-all_products = [(warp_products.skus[i],warp_products.prices[i],warp_products.popularity[i]) for i in range(warp_products.entries)]
-# print(all_products)
+        file_path = 'product_data.csv'
 
-
-# file_path = 'product_data.csv'
-
-# with open(file_path, mode='w', newline='') as file:
-#     writer = csv.writer(file)
-    
-#     writer.writerow(['SKU', 'Price', 'Popularity'])
-    
-#     for row in all_products:
-#         writer.writerow(row)
+        with open(file_path, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            
+            writer.writerow(['Product SKU', 'Price'])
+            
+            for row in self.products:
+                writer.writerow(row)
 
 
-# print(products.skus)
-# print(products.popularity)
+class Users:
+
+    def __init__(self,num_users):
+        
+        self.num_users = num_users
+        locales = ["en_GB","en_US","fr_FR","en_CA","de_DE"]
+
+        self.users = []
+
+        for i in range(num_users):
+
+            user_id = f"{i + 1:05}"
+            random_locale = random.choice(locales)
+            fake = Faker(random_locale)
+            profile = fake.simple_profile()
+            name = profile["name"]
+            address = profile["address"]
+            country = fake.current_country()
+            email = f"{name.lower().replace(" ","")}@example.com"
+            user = (user_id, name, address, country, email)
+            self.users.append(user)
+
+    def to_csv(self):
+
+        file_path = 'customer_data.csv'
+
+        with open(file_path, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            
+            writer.writerow(['User ID', 'Name', 'Address', 'Country', 'Email'])
+            
+            for row in self.users:
+                writer.writerow(row)            
 
 
-orders = generate_orders(num_orders=NUM_ORDERS,products=warp_products,max_num_items=5)
-# print(orders)
+class Orders:
+
+    def __init__(self,num_orders,users,products,max_num_items):
+        
+        self.num_orders = num_orders
+        self.users = users
+        self.products = products
+        self.max_num_items = max_num_items
+
+        self.orders = []
+
+        for i in range(self.num_orders):
+
+            items_in_order = np.random.randint(1,self.max_num_items)
+
+            random_customer = random.choice(self.users.users)
+            (
+                customer_id, 
+                customer_name, 
+                customer_address,
+                customer_country, 
+                customer_email
+            ) = random_customer
+
+            order_id = f'{(i + 1):04}'
+
+            order_lines = {}
+
+            for i in range(items_in_order):
+
+                random_product = str(np.random.choice(products.skus,p=self.products.popularity))
+                
+                if random_product in order_lines:
+                    order_lines[random_product] += 1
+                else:
+                    order_lines[random_product] = 1
+            
+
+            for sku, qty in order_lines.items():
+
+                order = (order_id, customer_id, customer_name, customer_address, customer_country, customer_email, sku, qty, products.price[sku])
+                self.orders.append(order)
+
+    def to_csv(self,wide=False):
+
+        file_path = 'orders.csv'
+
+        with open(file_path, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            
+            writer.writerow(['Order ID', 'Customer ID', 'Name', 'Address', 'Country', 'Email', 'Item', 'Qty', 'Price'])
+            
+            for row in self.orders:
+                writer.writerow(row)
 
 
-totals = {}
+products = Products(label_prefix="FEEL",entries=NUM_PRODUCTS)
+customers = Users(num_users=NUM_USERS)
+orders = Orders(num_orders=NUM_ORDERS,users=customers,products=products,max_num_items=5)
 
-for d in orders:
-    for key, value in d.items():
-        totals[key] = totals.get(key, 0) + value
+products.to_csv()
+customers.to_csv()
+orders.to_csv(wide=True)
 
-print(totals)
 
-print(warp_products.price["WARP001"])
