@@ -1,14 +1,17 @@
 from faker import Faker
 import csv
 import random
+from unidecode import unidecode
 
-LABEL_PREFIX = 'DARE'
-NUM_PRODUCTS = 100
+LABEL_PREFIX = 'STDR'
+NUM_PRODUCTS = 30
 
-NUM_USERS = 45000
+NUM_USERS = 10
 LOCALES = ['en_GB','en_US','fr_FR','en_CA','de_DE']
 
-NUM_ORDERS = 50000
+NUM_ORDERS = 200
+ORDERS_START_DATE = '-2y'
+MESSY_DATA = False
 
 
 class Products:
@@ -57,12 +60,15 @@ class Users:
             fake = Faker(random_locale)
             profile = fake.simple_profile()
             name = profile['name']
-            address = profile['address']
+            address = profile['address'].replace('\n',', ')
             country = fake.current_country()
-            email = f'{name.lower().replace(' ','').replace('.','')}@example.com'
+            email = self.create_email(name)
             user = (user_id, name, address, country, email)
             self.users.append(user)
 
+    def create_email(self,name):
+        return f'{unidecode(name.lower().replace(' ','').replace('.',''))}@example.com'
+    
     def to_csv(self,file_path='customer_data.csv'):
 
         self.file_path = file_path
@@ -77,12 +83,14 @@ class Users:
 
 class Orders:
 
-    def __init__(self,num_orders,users,products,max_num_items):
+    def __init__(self,num_orders,users,products,max_num_items,start_date,end_date='today',messy_data=False):
         
         self.num_orders = num_orders
         self.users = users
         self.products = products
         self.max_num_items = max_num_items
+        self.start_date = start_date
+        self.end_date = end_date
 
         self.detailed_orders = []
         self.simple_orders = []
@@ -90,6 +98,10 @@ class Orders:
         for i in range(self.num_orders):
 
             items_in_order = random.randint(1,self.max_num_items)
+
+            fake = Faker()
+            random_date = fake.date_between(start_date=self.start_date,end_date=self.end_date)
+            order_date = random_date
 
             random_customer = random.choice(self.users.users)
             (
@@ -116,12 +128,51 @@ class Orders:
 
             for sku, qty in order_lines.items():
 
-                detailed_order = (order_id, customer_id, customer_name, customer_address, customer_country, customer_email, sku, qty, products.price[sku])
+                detailed_order = (order_id, order_date, customer_id, customer_name, customer_address, customer_country, customer_email, sku, qty, products.price[sku])
+                
+                if messy_data:
+                    detailed_order = self.introduce_messy_data(detailed_order)
+                    if random.random() < 0.05:
+                        self.detailed_orders.append(detailed_order)
+
                 self.detailed_orders.append(detailed_order)
 
-                simple_order = (order_id, customer_id, sku, qty, products.price[sku])
+                simple_order = (order_id, order_date, customer_id, sku, qty, products.price[sku])
+
+                if messy_data:
+                    simple_order = self.introduce_messy_data(simple_order)
+                    if random.random() < 0.05:
+                        self.simple_orders.append(simple_order)
+
                 self.simple_orders.append(simple_order)
 
+    def introduce_messy_data(self,order):
+
+        messy_data = order
+        
+        if random.random() < 0.1:
+                
+                idx = random.randint(0, len(order) - 4)
+                messy_data = list(order)
+                messy_data[idx] = None
+
+        if random.random() < 0.2:
+                
+                idx = random.randint(0, len(order) - 4)
+                messy_data = list(order)
+
+                if type(messy_data[idx]) is str:
+                    
+                    if random.random() < 0.5:
+
+                        messy_data[idx] = messy_data[idx].lower()
+                        
+                    else:
+                        
+                        messy_data[idx] = messy_data[idx].upper()
+                        
+
+        return tuple(messy_data)
 
     def to_csv(self,detailed=True,file_path = 'orders.csv'):
 
@@ -131,20 +182,20 @@ class Orders:
             writer = csv.writer(file)
             
             if detailed:
-                writer.writerow(['Order ID', 'Customer ID', 'Name', 'Address', 'Country', 'Email', 'Item', 'Qty', 'Price'])
+                writer.writerow(['Order ID', 'Order Date', 'Customer ID', 'Name', 'Address', 'Country', 'Email', 'Item', 'Qty', 'Price'])
                 
                 for row in self.detailed_orders:
                     writer.writerow(row)
             
             else:
-                writer.writerow(['Order ID', 'Customer ID', 'Item', 'Qty', 'Price'])
+                writer.writerow(['Order ID', 'Order Date', 'Customer ID', 'Item', 'Qty', 'Price'])
                 
                 for row in self.simple_orders:
                     writer.writerow(row)
 
 products = Products(label_prefix=LABEL_PREFIX, entries=NUM_PRODUCTS)
 customers = Users(num_users=NUM_USERS, locales=LOCALES)
-orders = Orders(num_orders=NUM_ORDERS, users=customers, products=products, max_num_items=5)
+orders = Orders(num_orders=NUM_ORDERS, users=customers, products=products, max_num_items=5, start_date=ORDERS_START_DATE,messy_data=MESSY_DATA)
 
 products.to_csv()
 customers.to_csv()
