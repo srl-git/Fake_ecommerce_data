@@ -2,8 +2,10 @@ from datetime import datetime, timedelta
 from unidecode import unidecode
 import csv
 import random
+
 from faker import Faker
 import sqlite3
+
 import sql_statements as sql
 
 
@@ -19,6 +21,7 @@ ORDERS_START_DATE = datetime.strptime('2024-01-18','%Y-%m-%d')
 MESSY_DATA = True
 
 conn = sqlite3.connect("ecommerce_data.db")
+cursor = conn.cursor()
 
 class Products:
     
@@ -52,44 +55,50 @@ class Products:
         if isinstance(sku, str):
             sku = (sku, )
 
-        cursor = conn.cursor()
         cursor.execute(sql.product_statements.get_products_by_sku(sku), sku)
         products_to_update = cursor.fetchall()
 
         if isinstance(price, (int, float)):
             price = [price] * len(products_to_update)
+
         if isinstance(active, bool):
             active = [active] * len(products_to_update)
 
         update_data = []
 
         if products_to_update:
-            
             for product in products_to_update:
 
-                item_sku = product[0]
-                index = sku.index(item_sku)
-                update_price = price[index] if price is not None else product[1]
+                sku_to_update = product[0]
+                index = sku.index(sku_to_update)
+                price_updated = price[index] if price is not None else product[1]
                 date_updated = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
-                update_active = active[index] if active is not None else product[4]
-                update_data.append((update_price, date_updated, update_active, item_sku))
+                active_updated = active[index] if active is not None else product[4]
+                update_data.append((price_updated, date_updated, active_updated, sku_to_update))
 
             cursor.executemany(sql.product_statements.update_products,(update_data))
             conn.commit()
 
     def get_products(self):
         
-        cursor = conn.cursor()
-
-        # cursor.execute('''
-        #     SELECT * 
-        #     FROM Products
-        # ''')
         cursor.execute(sql.product_statements.get_products)
-
         all_products = cursor.fetchall()
         
         return all_products
+    
+    def get_last_added(self):
+
+        cursor.execute(sql.product_statements.get_last_added)
+        last_added = cursor.fetchall()[0]
+
+        return last_added
+
+    def get_last_updated(self):
+
+        cursor.execute(sql.product_statements.get_last_added)
+        last_added = cursor.fetchall()[0]
+
+        return last_added
     
     def to_csv(self):
 
@@ -107,12 +116,14 @@ class Products:
 
     def _initialise_db_table(self):
         
-        cursor = conn.cursor()
         cursor.execute(sql.product_statements.create_product_table)
+
+    def _drop_db_table(self):
+
+        cursor.execute(sql.product_statements.drop_product_table)
 
     def _get_sku_index(self, label_prefix):
         
-        cursor = conn.cursor()
         cursor.execute(sql.product_statements.get_sku_index, (f'{label_prefix}%',))
         sku_index = cursor.fetchone()[0]
 
@@ -120,16 +131,14 @@ class Products:
 
     def _get_upper_limit(self):
 
-        cursor = conn.cursor()
         cursor.execute(sql.product_statements.get_upper_limit)
-
         max_popularity_score = cursor.fetchone()[0]
         upper_limit = max_popularity_score * 1.1 if max_popularity_score else 1
+        
         return upper_limit
 
     def _set_popularity_scores(self):
-
-        cursor = conn.cursor()
+ 
         cursor.execute(sql.product_statements.get_popularity_scores)
         old_popularity_scores = tuple(score[0] for score in cursor.fetchall())
         normalizer = 1 / float(sum(old_popularity_scores))
@@ -138,33 +147,10 @@ class Products:
         cursor.executemany(sql.product_statements.set_popularity_scores, (update_scores))
 
     def _add_to_db(self, products):
-        
-        cursor = conn.cursor()     
+            
         cursor.executemany(sql.product_statements.add_products_to_db, products)
         self._set_popularity_scores()
         conn.commit()
-
-    def get_last_added(self):
-
-        cursor = conn.cursor()
-        cursor.execute(sql.product_statements.get_last_added)
-        last_added = cursor.fetchall()[0]
-
-        return last_added
-
-    # def _get_last_row_id(self):
-
-    #     cursor = conn.cursor()
-
-    #     cursor.execute('''SELECT rowid
-    #                    FROM Products
-    #                    ORDER BY rowid DESC
-    #                    LIMIT 1
-    #                    ''')
-        
-    #     last_row_id = cursor.fetchone()
-        
-    #     return last_row_id[0] if last_row_id else 0
 
 
 class Users:
@@ -173,48 +159,119 @@ class Users:
 
         self._initialise_db_table()
     
-    # def create(self, num_users: int, locales: list[str]):
+    def create(self, num_users: int, locales: list[str]): 
+
+        users = []
+
+        for i in range(num_users):
+
+            random_locale = random.choice(locales)
+            fake = Faker(random_locale)
+            profile = fake.simple_profile()
+            user_name = profile['name']
+            user_address = profile['address'].replace('\n',', ')
+            user_country = fake.current_country()
+            user_email = self._create_email(user_name)
+            date_created = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            date_updated = date_created
+            user = (user_name, user_address, user_country, user_email, date_created, date_updated)
+            users.append(user)
+
+        self._add_to_db(users)
+
+        return self
+
+    def update(self, user_id: int | list[int] | tuple[int, ...], user_name: str | list[str] | None = None, user_address: str | list[str] | None = None, user_country: str | list[str] | None = None, user_email: str | list[str] | None = None):
         
-    #     self.num_users = num_users
-    #     self.locales = locales
+        if isinstance(user_id, int):
+            user_id = (user_id, )
 
-    #     self.users = []
+        cursor.execute(sql.user_statements.get_users_by_id(user_id), user_id)
+        users_to_update = cursor.fetchall()
 
-    #     for i in range(num_users):
 
-    #         user_id = f'{i + 1:05}'
-    #         random_locale = random.choice(locales)
-    #         fake = Faker(random_locale)
-    #         profile = fake.simple_profile()
-    #         name = profile['name']
-    #         address = profile['address'].replace('\n',', ')
-    #         country = fake.current_country()
-    #         email = self.create_email(name)
-    #         user = (user_id, name, address, country, email)
-    #         self.users.append(user)
+        if isinstance(user_name, str):
+            user_name = [user_name] * len(users_to_update)
 
-    # def create_email(self,name):
-    #     email_prefix = unidecode(name.lower().replace(' ','').replace('.',''))
-    #     email = f'{email_prefix}@example.com'
-    #     return email
+        if isinstance(user_address, str):
+            user_address = [user_address] * len(users_to_update)
+
+        if isinstance(user_country, str):
+            user_country = [user_country] * len(users_to_update)
+
+        if isinstance(user_email, str):
+            user_email = [user_email] * len(users_to_update)
+
+        update_data = []
+
+        if users_to_update:
+            for user in users_to_update:
+
+                user_id_to_update = user[0]
+                index = user_id.index(user_id_to_update)
+                user_name_updated = user_name[index] if user_name is not None else user[1]
+                user_address_updated = user_address[index] if user_address is not None else user[2]
+                user_country_updated = user_country[index] if user_country is not None else user[3]
+                user_email_updated = user_email[index] if user_email is not None else user[4]
+                date_updated = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+                update_data.append((user_name_updated, user_address_updated, user_country_updated, user_email_updated, date_updated, user_id_to_update))
+
+            cursor.executemany(sql.user_statements.update_users,(update_data))
+            conn.commit()
+
+    def get_users(self):
+        
+        cursor.execute(sql.user_statements.get_users)
+        all_users = cursor.fetchall()
+        
+        return all_users
+
+    def get_last_added(self):
+
+        cursor.execute(sql.user_statements.get_last_added)
+        last_added = cursor.fetchall()[0]
+
+        return last_added
+
+    def get_last_updated(self):
+
+        cursor.execute(sql.user_statements.get_last_updated)
+        last_added = cursor.fetchall()[0]
+
+        return last_added
     
-    # def to_csv(self):
+    def to_csv(self):
 
-    #     date_today = datetime.today().date().strftime('%Y-%m-%d')
-    #     file_path = f'Customer_report_{date_today}.csv'
+        date_today = datetime.today().date().strftime('%Y-%m-%d')
+        file_path = f'User_report_{date_today}.csv'
+        export_data = self.get_users()
 
-    #     with open(file_path, mode='w', newline='') as file:
+        with open(file_path, mode='w', newline='') as file:
             
-    #         writer = csv.writer(file)
-    #         writer.writerow(['User ID', 'Name', 'Address', 'Country', 'Email'])
+            writer = csv.writer(file)
+            writer.writerow(['user_id', 'user_name', 'user_address', 'user_country', 'user_email', 'date_created', 'date_updated'])
             
-    #         for row in self.users:
-    #             writer.writerow(row)            
-
+            for row in export_data:
+                writer.writerow(row)        
+   
+    def _create_email(self,name):
+        email_prefix = unidecode(name.lower().replace(' ','').replace('.',''))
+        email = f'{email_prefix}@example.com'
+        return email
+    
     def _initialise_db_table(self):
 
-        cursor = conn.cursor()
         cursor.execute(sql.user_statements.create_user_table)
+
+    def _drop_db_table(self):
+        
+        cursor.execute(sql.user_statements.drop_user_table)
+        conn.commit()
+
+    def _add_to_db(self, users):
+             
+        cursor.executemany(sql.user_statements.add_users_to_db, users)
+        conn.commit()
 
 
 # class Orders:
@@ -357,9 +414,12 @@ class Users:
 #                     writer.writerow(row)
 
 products = Products()
-# products.create(LABEL_PREFIX,NUM_PRODUCTS, PRICING)
+products.create(LABEL_PREFIX,NUM_PRODUCTS, PRICING)
+# products._drop_db_table()
 
-# users = Users()
+users = Users()
+users.create(NUM_USERS,LOCALES)
+# users._drop_db_table()
 
 
 # orders = Orders(num_orders=NUM_ORDERS, 

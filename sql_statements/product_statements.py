@@ -8,6 +8,10 @@ create_product_table = '''
                 item_popularity REAL);
         '''
 
+drop_product_table = '''
+            DROP TABLE Products;
+        '''
+
 get_sku_index = '''
             SELECT COUNT(item_sku) 
             FROM Products 
@@ -61,6 +65,13 @@ get_last_added = '''
             SELECT *
             FROM Products
             ORDER BY rowid DESC
+            LIMIT 1
+        '''
+
+get_last_updated = '''
+            SELECT *
+            FROM Products
+            ORDER BY date_updated DESC
             LIMIT 1
         '''
 
