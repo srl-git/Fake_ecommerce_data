@@ -122,6 +122,17 @@ class Products:
 
                 return all_products
     
+    def get_products_by_date_range(self, start_date: str | None = None, end_date: str | None = None) -> list[tuple]:
+
+        today = datetime.today().strftime('%Y-%m-%d')
+        start_date = '0000-01-01' if start_date is None else start_date
+        end_date = today if end_date is None else end_date
+
+        with DatabaseConnection(self.db_path) as db:
+            db.cursor.execute(sql.product_statements.get_products_by_date_range,(start_date, end_date))
+            products_by_date_range = db.cursor.fetchall()
+            return products_by_date_range
+
     def get_last_added(self) -> tuple:
 
         with DatabaseConnection(self.db_path) as db:
@@ -138,11 +149,15 @@ class Products:
 
         return last_added
     
-    def to_csv(self) -> None:
+    def to_csv(self, start_date: str | None = None, end_date: str | None = None) -> None:
 
         date_today = datetime.today().strftime('%Y-%m-%d')
         file_path = f'Product_report_{date_today}.csv'
-        export_data = [product[:-1] for product in self.get_products()]
+
+        if start_date or end_date:
+            export_data = [product[:-1] for product in self.get_products_by_date_range(start_date,end_date)]
+        else:
+            export_data = [product[:-1] for product in self.get_products()]
 
         with open(file_path, mode='w', newline='') as file:
             
@@ -228,7 +243,7 @@ class Users:
 
         self._add_to_db(users)
 
-    def update(self, user_id: int | list[int] | tuple[int, ...], user_name: str | list[str] | None = None, user_address: str | list[str] | None = None, user_country: str | list[str] | None = None, user_email: str | list[str] | None = None) -> None:
+    def update(self, user_id: int | list[int] | tuple[int], user_name: str | list[str] | None = None, user_address: str | list[str] | None = None, user_country: str | list[str] | None = None, user_email: str | list[str] | None = None) -> None:
         
         if isinstance(user_id, int):
             user_id = (user_id, )
@@ -514,7 +529,8 @@ products = Products(db_path)
 # products._get_upper_limit()
 # all_products = products.get_products()
 # print(all_products)
-# products.to_csv()
+# print(products.get_products_by_date_range(end_date='2025-01-15'))
+# products.to_csv(start_date='2025-01-16')
 # products._drop_db_table()
 
 users = Users(db_path)

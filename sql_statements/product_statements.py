@@ -61,6 +61,12 @@ get_products = '''
             FROM Products
         '''
 
+get_products_by_date_range = '''
+            SELECT *
+            FROM Products
+            WHERE DATE(date_created) BETWEEN ? AND ?;                   
+        '''
+
 get_last_added = '''
             SELECT *
             FROM Products
