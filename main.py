@@ -66,7 +66,7 @@ class Products:
 
     def __str__(self):
        
-        return f'There are {len(self.get_products())} products in the database'
+        return f'There are {self.get_count_products()} products in the database'
      
     def create(self, label_prefix: str, num_items: int, pricing: list[float]) -> None :
         
