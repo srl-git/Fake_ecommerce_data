@@ -56,6 +56,11 @@ update_products = '''
                 item_sku = ?
         '''
 
+get_count_products = '''
+            SELECT COUNT(*) 
+            FROM Products
+        '''
+
 get_products = '''
             SELECT * 
             FROM Products

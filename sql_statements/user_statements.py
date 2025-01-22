@@ -37,9 +37,20 @@ update_users = '''
                 user_id = ?
         '''
 
+get_count_users = '''
+            SELECT COUNT(*) 
+            FROM Users
+        '''
+
 get_users = '''
             SELECT * 
             FROM Users
+        '''
+
+get_users_by_date_range = '''
+            SELECT *
+            FROM Users
+            WHERE DATE(date_created) BETWEEN ? AND ?;                   
         '''
 
 get_last_added = '''

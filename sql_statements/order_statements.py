@@ -29,9 +29,20 @@ add_orders_to_db = '''
             VALUES (?, ?, ?, ?, ?, ?, ?)
         '''
 
+get_count_orders = '''
+            SELECT COUNT(*) 
+            FROM Orders
+        '''
+
 get_orders = '''
             SELECT * 
             FROM Orders
+        '''
+
+get_orders_by_date_range =  '''
+            SELECT *
+            FROM Orders
+            WHERE DATE(date_created) BETWEEN ? AND ?;                   
         '''
 
 get_last_order_id = '''

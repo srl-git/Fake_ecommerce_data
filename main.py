@@ -14,7 +14,7 @@ LABEL_PREFIX = 'STDR'
 NUM_PRODUCTS = 25
 PRICING = [18.0,19.0,20.0,21.0]
 
-NUM_USERS = 900
+NUM_USERS = 90
 LOCALES = ['en_GB','en_US','fr_FR','en_CA','de_DE']
 
 NUM_ORDERS = 20
@@ -59,7 +59,15 @@ class Products:
 
         self.db_path = db_path
         self._initialise_db_table()
+
+    def __repr__(self):
         
+        return f'Products({self.db_path})'
+
+    def __str__(self):
+       
+        return f'There are {len(self.get_products())} products in the database'
+     
     def create(self, label_prefix: str, num_items: int, pricing: list[float]) -> None :
         
         products = []
@@ -104,6 +112,14 @@ class Products:
             with DatabaseConnection(self.db_path) as db:
                 db.cursor.executemany(sql.product_statements.update_products,(update_data))
 
+    def get_count_products(self) -> int:
+        
+        with DatabaseConnection(self.db_path) as db:
+            db.cursor.execute(sql.product_statements.get_count_products)
+            count_products = db.cursor.fetchone()[0]
+            
+            return count_products
+
     def get_products(self, sku: str | list[str] | tuple[str] | None = None) -> list[tuple]:
         
         with DatabaseConnection(self.db_path) as db:
@@ -131,7 +147,8 @@ class Products:
         with DatabaseConnection(self.db_path) as db:
             db.cursor.execute(sql.product_statements.get_products_by_date_range,(start_date, end_date))
             products_by_date_range = db.cursor.fetchall()
-            return products_by_date_range
+            
+        return products_by_date_range
 
     def get_last_added(self) -> tuple:
 
@@ -144,10 +161,10 @@ class Products:
     def get_last_updated(self) -> tuple:
 
         with DatabaseConnection(self.db_path) as db:
-            db.cursor.execute(sql.product_statements.get_last_added)
-            last_added = db.cursor.fetchall()[0]
+            db.cursor.execute(sql.product_statements.get_last_updated)
+            last_updated = db.cursor.fetchall()[0]
 
-        return last_added
+        return last_updated
     
     def to_csv(self, start_date: str | None = None, end_date: str | None = None) -> None:
 
@@ -223,6 +240,14 @@ class Users:
         self.db_path = db_path
         self._initialise_db_table()
     
+    def __repr__(self):
+        
+        return f'Users({self.db_path})'
+
+    def __str__(self):
+    
+        return f'There are {self.get_count_users()} users in the database'
+    
     def create(self, num_users: int, locales: list[str]) -> None: 
 
         users = []
@@ -279,6 +304,14 @@ class Users:
             with DatabaseConnection(self.db_path) as db:
                 db.cursor.executemany(sql.user_statements.update_users,(update_data))
 
+    def get_count_users(self) -> int:
+
+        with DatabaseConnection(self.db_path) as db:
+            db.cursor.execute(sql.user_statements.get_count_users)
+            count_users = db.cursor.fetchone()[0]
+            
+        return count_users
+        
     def get_users(self, user_id: int | list[int] | tuple[int] | None = None) -> list[tuple]:
         
         with DatabaseConnection(self.db_path) as db:
@@ -287,11 +320,26 @@ class Users:
                     user_id = (user_id, )
                 db.cursor.execute(sql.user_statements.get_users_by_id(user_id), user_id)
                 users = db.cursor.fetchall()
+                
                 return users
+            
             else:    
                 db.cursor.execute(sql.user_statements.get_users)
                 all_users = db.cursor.fetchall()
+                
                 return all_users
+
+    def get_users_by_date_range(self, start_date: str | None = None, end_date: str | None = None) -> list[tuple]:
+
+        today = datetime.today().strftime('%Y-%m-%d')
+        start_date = '0000-01-01' if start_date is None else start_date
+        end_date = today if end_date is None else end_date
+
+        with DatabaseConnection(self.db_path) as db:
+            db.cursor.execute(sql.user_statements.get_users_by_date_range,(start_date, end_date))
+            users_by_date_range = db.cursor.fetchall()
+            
+        return users_by_date_range
 
     def get_last_added(self) -> tuple:
 
@@ -305,15 +353,19 @@ class Users:
 
         with DatabaseConnection(self.db_path) as db:
             db.cursor.execute(sql.user_statements.get_last_updated)
-            last_added = db.cursor.fetchall()[0]
+            last_updated = db.cursor.fetchall()[0]
 
-        return last_added
+        return last_updated
     
-    def to_csv(self) -> None:
+    def to_csv(self, start_date: str | None = None, end_date: str | None = None) -> None:
 
         date_today = datetime.today().date().strftime('%Y-%m-%d')
         file_path = f'User_report_{date_today}.csv'
-        export_data = self.get_users()
+
+        if start_date or end_date:
+            export_data = self.get_users_by_date_range(start_date, end_date)
+        else:
+            export_data = self.get_users()
 
         with open(file_path, mode='w', newline='') as file:
             writer = csv.writer(file)
@@ -351,6 +403,14 @@ class Orders:
         self.db_path = db_path
         self._initialise_db_table()
 
+    def __repr__(self):
+        
+        return f'Orders({self.db_path})'
+
+    def __str__(self):
+        
+        return f'There are {self.get_count_orders()} orders in the database'
+    
     def create(self, num_orders: int, users: Users, products: Products, max_num_items: int, start_date: datetime, end_date: str ='today') -> None:
         
         try:
@@ -404,6 +464,34 @@ class Orders:
 
             return
 
+    def get_count_orders(self) -> int:
+
+        with DatabaseConnection(self.db_path) as db:
+            db.cursor.execute(sql.order_statements.get_count_orders)
+            count_orders = db.cursor.fetchone()[0]
+        
+        return count_orders
+    
+    def get_orders(self) -> list[tuple]:
+
+        with DatabaseConnection(self.db_path) as db:
+            db.cursor.execute(sql.order_statements.get_orders)
+            all_orders = db.cursor.fetchall()
+
+            return all_orders
+    
+    def get_orders_by_date_range(self, start_date: str | None = None, end_date: str | None = None):
+
+        today = datetime.today().strftime('%Y-%m-%d')
+        start_date = '0000-01-01' if start_date is None else start_date
+        end_date = today if end_date is None else end_date
+
+        with DatabaseConnection(self.db_path) as db:
+            db.cursor.execute(sql.order_statements.get_orders_by_date_range,(start_date, end_date))
+            orders_by_date_range = db.cursor.fetchall()
+            
+        return orders_by_date_range
+    
     # def introduce_messy_data(self,orders):
 
     #     for order in orders:
@@ -430,11 +518,15 @@ class Orders:
                             
     #     return tuple(messy_data)
 
-    def to_csv(self) -> None:
+    def to_csv(self, start_date: str | None = None, end_date: str | None = None) -> None:
         
         date_today = datetime.today().date().strftime('%Y-%m-%d')
         file_path = f'Order_report_{date_today}.csv'
-        export_data = self.get_orders()
+
+        if start_date or end_date:
+            export_data = self.get_orders_by_date_range(start_date, end_date)
+        else:
+            export_data = self.get_orders()
 
         with open(file_path, mode='w', newline='') as file:
             writer = csv.writer(file)
@@ -510,16 +602,9 @@ class Orders:
             last_order_id = result[0] if result is not None else 0
             
             return last_order_id
-
-    def get_orders(self) -> list[tuple]:
-
-        with DatabaseConnection(self.db_path) as db:
-            db.cursor.execute(sql.order_statements.get_orders)
-            all_orders = db.cursor.fetchall()
-
-            return all_orders
     
 products = Products(db_path)
+# print(products)
 # products.create(LABEL_PREFIX,NUM_PRODUCTS, PRICING)
 # products.update('STDR014',price=5,active=False)
 # products.update(['STDR001','STDR002','STDR003','STDR004','STDR005'],active=False)
@@ -528,12 +613,13 @@ products = Products(db_path)
 # products._get_sku_index('STDR')
 # products._get_upper_limit()
 # all_products = products.get_products()
-# print(all_products)
 # print(products.get_products_by_date_range(end_date='2025-01-15'))
 # products.to_csv(start_date='2025-01-16')
 # products._drop_db_table()
 
 users = Users(db_path)
+# print(len(users.get_users_by_date_range('2025-01-21')))
+# print(users.get_count_users())
 # users.create(NUM_USERS,LOCALES)
 # users.update(7,'Harry Linger')
 # print(users.get_users([1,2,3,4,5]))
@@ -542,6 +628,8 @@ users = Users(db_path)
 # users._drop_db_table()
 
 orders = Orders(db_path)
+# print(len(orders.get_orders_by_date_range(start_date='2024-12-21')))
+# print(orders)
 # orders.create(num_orders=NUM_ORDERS,users=users,products=products,max_num_items=MAX_ITEMS_PER_ORDER,start_date=ORDERS_START_DATE)
 # all_orders = orders.get_orders()
 # orders.to_csv()
