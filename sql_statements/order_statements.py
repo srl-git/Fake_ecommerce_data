@@ -30,7 +30,7 @@ add_orders_to_db = '''
         '''
 
 get_count_orders = '''
-            SELECT COUNT(*) 
+            SELECT COUNT(DISTINCT(order_id)) 
             FROM Orders
         '''
 
