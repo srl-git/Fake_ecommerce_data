@@ -14,6 +14,9 @@ class DatabaseConnection:
 
     def __init__(self, path: str) -> None:
 
+        if not (isinstance(path, str) and path.endswith('.db')):
+            raise ValueError('The path to the database file must be a non empty string with a .db file extension')
+
         self.path = path
 
     def __enter__(self):
@@ -62,14 +65,7 @@ class Products:
         pricing: list[float]
     ) -> None:
         
-        if not (isinstance(label_prefix, str) and label_prefix.strip()):
-            raise ValueError(f'Label prefix must a non empty string. Value provided: {label_prefix=}')
-        
-        if not (isinstance(num_items, int) and num_items > 0):
-            raise ValueError(f'Number of items to create must be a non 0 integer. Value provided: {num_items=}')
-
-        if not (isinstance(pricing, list) and all(isinstance(val, (int, float)) and val > 0 for val in pricing)):
-            raise ValueError(f'Pricing must be a list of positive floats or integers. Values provided: {pricing=}')
+        self._validate_create_args(label_prefix, num_items, pricing)
 
         products = []
         index = self._get_sku_index(label_prefix)
@@ -94,66 +90,20 @@ class Products:
         item_price: int | float | list[int | float] | None = None,
         is_active: bool | list[bool] | None = None
     ) -> None:
+    
+        self._validate_update_args(item_sku, item_price, is_active)
 
-        if not(item_sku and isinstance(item_sku, (list, str)) and all(isinstance(s, str) for s in item_sku)):
-            raise ValueError(f'item_sku to update must be a non empty string or list of strings. Value provided: {item_sku=}')
-        
         products_to_update = self.get_products(item_sku)
         
         if item_price is not None:
-
-            if not isinstance(item_price, (list, int, float)) or isinstance(item_price, bool):
-                raise TypeError(
-                    'Invalid type for "item_price": Expected a positive integer, float, or a list of positive integers/floats. '
-                    f'Received type: {type(item_price).__name__}.'
-                )
-            
-            if isinstance(item_price, list):
-                
-                if len(item_price) not in (1, len(item_sku)):
-                    raise ValueError(
-                        'Mismatch between item_price and item_sku: '
-                        f'Expected either 1 or {len(item_sku)} prices, but got {len(item_price)}.'
-                    )
-                
-                if not all(isinstance(element, (int, float)) and element >= 0 for element in item_price):
-                    raise ValueError(
-                        'Invalid value in "item_price": All elements in the list must be positive integers or floats.'
-                    )
-                if len(item_price) == 1:
-                    item_price = item_price[0]
-
+            if isinstance(item_price, list) and len(item_price) == 1:
+                item_price = item_price[0]
             if isinstance(item_price, (int, float)):
-                if item_price < 0:
-                    raise ValueError(
-                        f'Invalid value for "item_price": Price must be a positive number. Value provided: {item_price}.'
-                    )
-
                 item_price = [item_price] * len(products_to_update)
-
+                
         if is_active is not None:
-
-            if not isinstance(is_active, (list, bool)):
-                raise TypeError(
-                    'Invalid type for "active": Expected a boolean. '
-                    f'Received type: {type(active).__name__}.'
-                )
-            
-            if isinstance(is_active, list):
-                
-                if len(is_active) not in (1, len(item_sku)):
-                    raise ValueError(
-                        'Mismatch between active and item_sku: '
-                        f'Expected either 1 or {len(item_sku)} values, but got {len(is_active)}.'
-                    )
-                
-                if not all(isinstance(element, bool) for element in is_active):
-                    raise ValueError(
-                        'Invalid value in "active": All elements in the list must be booleans.'
-                    )
-                if len(is_active) == 1:
-                    is_active = is_active[0]
-
+            if isinstance(is_active, list) and len(is_active) == 1:
+                is_active = is_active[0]
             if isinstance(is_active, bool):
                 is_active = [is_active] * len(products_to_update)
 
@@ -170,9 +120,7 @@ class Products:
                 update_data.append((price_updated, date_updated, is_active_updated, sku_to_update))
 
             with DatabaseConnection(self.db_path) as db:
-                db.cursor.executemany(sql.product_statements.update_products,(update_data))
-        
-        
+                db.cursor.executemany(sql.product_statements.update_products,(update_data))  
 
     def get_count_products(self) -> int:
         
@@ -264,6 +212,113 @@ class Products:
 
         with DatabaseConnection(self.db_path) as db:
             db.cursor.execute(sql.product_statements.drop_product_table)
+
+    def _validate_create_args(
+        self, 
+        label_prefix: str, 
+        num_items: int, 
+        pricing: list[float]) -> None:
+
+        if not (isinstance(label_prefix, str) and label_prefix.strip()):
+            raise ValueError(
+                f'ERROR in Products.create(). Expected a non empty string value for label_prefix argument. '
+                f'Received value: "{label_prefix}" of type: {type(label_prefix).__name__}.'
+            )
+        
+        if not (isinstance(num_items, int) and num_items > 0):
+            raise ValueError(
+                f'ERROR in Products.create(). Expected a positive integer value for num_items argument. '
+                f'Received value: "{num_items}" of type: {type(num_items).__name__}.'
+            )
+
+        if not isinstance(pricing, list):
+            raise TypeError(
+                f'ERROR in Products.create(). Expected a list of positive floats or integers for pricing argument. '
+                f'Received value: "{pricing}" of type {type(pricing).__name__}.'
+            )
+        
+        if not all(isinstance(val, (int, float)) and val > 0 for val in pricing):
+            raise ValueError(
+                'ERROR in Products.create(). Invalid value in pricing argument: '
+                'All elements in the list must be positive integers or floats.'
+            )
+
+    def _validate_update_args(
+        self, 
+        item_sku: str | list[str],
+        item_price: int | float | list[int | float] | None,
+        is_active: bool | list[bool] | None) -> None:
+        
+        if not(item_sku and isinstance(item_sku, (list, str)) and all(isinstance(s, str) for s in item_sku)):
+            raise ValueError(
+                'ERROR in Products.update(). Expected a non empty string or list of strings for item_sku argument. '
+                f'Receieved value "{item_sku}" of type {type(item_sku).__name__}.'
+            )
+        
+        if item_price is not None:
+
+            if not isinstance(item_price, (list, int, float)) or isinstance(item_price, bool):
+                raise TypeError(
+                    'ERROR in Products.update(). '
+                    'Expected a positive integer, float, or a list of positive integers/floats for item_price argument. '
+                    f'Received value "{item_price}" of type: {type(item_price).__name__}.'
+                )
+            
+            if isinstance(item_price, list):
+
+                if isinstance(item_sku,str):
+                    raise ValueError(
+                        'ERROR in Products.update(). Mismatch between item_price and item_sku: '
+                        f'Expected 1 price but got {len(item_price)}.'
+                    )
+                
+                if len(item_price) not in (1, len(item_sku)):
+                    raise ValueError(
+                        'ERROR in Products.update(). Mismatch between item_price and item_sku: '
+                        f'Expected either 1 or {len(item_sku)} prices, but got {len(item_price)}.'
+                    )
+                
+                if not all(isinstance(element, (int, float)) and element >= 0 for element in item_price):
+                    raise ValueError(
+                        'ERROR in Products.update(). '
+                        'Invalid value in item_price argument: All elements in the list must be positive integers or floats.'
+                    )
+
+            if isinstance(item_price, (int, float)):
+                if item_price < 0:
+                    raise ValueError(
+                        'ERROR in Products.update(). '
+                        'Expected a positive integer, float, or a list of positive integers/floats for item_price argument. '
+                    )
+                
+            if is_active is not None:
+
+                if not isinstance(is_active, (list, bool)):
+                    raise TypeError(
+                        'ERROR in Products.update(). Expected a boolean or list of booleans for is_active argument. '
+                        f'Received value: "{is_active}" of type: {type(is_active).__name__}.'
+                    )
+                
+                if isinstance(is_active, list):
+                    
+                    if isinstance(item_sku, str):
+                        raise ValueError(
+                            'ERROR in Products.update(). Mismatch between is_active and item_sku: '
+                            f'Expected 1 boolean value but got {len(is_active)}.'
+                        )
+                    
+                    if len(is_active) not in (1, len(item_sku)):
+                        raise ValueError(
+                            'ERROR in Products.update(). Mismatch between is_active and item_sku: '
+                            f'Expected either 1 or {len(item_sku)} values, but got {len(is_active)}.'
+                        )
+                    
+                    if not all(isinstance(element, bool) for element in is_active):
+                        raise ValueError(
+                            'ERROR in Products.update(). '
+                            'Invalid value in is_active argument: All elements in the list must be booleans.'
+                        )
+
 
     def _get_sku_index(self, label_prefix: str) -> int:
         

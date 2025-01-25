@@ -1,8 +1,8 @@
 from ecommerce import Products, Users, Orders
 
-LABEL_PREFIX = 'STDR'
-NUM_PRODUCTS = 25
-PRICING = [18.0,19.0,20.0,21.0]
+LABEL_PREFIX = 'LCR'
+NUM_ITEMS = 10
+PRICING = [18.5,19.0,20.0,21.0]
 
 NUM_USERS = 25
 LOCALES = ['en_GB','en_US','fr_FR','en_CA','de_DE']
@@ -20,8 +20,8 @@ def main():
 
     products = Products(db_path)
     print(products)
-    # products.create(LABEL_PREFIX,NUM_PRODUCTS, PRICING)
-    # products.update('STDR014',price=5,active=False)
+    # products.create(label_prefix=LABEL_PREFIX,num_items=NUM_ITEMS,pricing=PRICING)
+    # products.update(item_sku=['STDR014','LCR002'],item_price=3,is_active=True)
     # products.update(['STDR001','STDR002','STDR003','STDR004','STDR005'],active=False)
     # products.get_last_added()
     # products.get_last_updated()
@@ -53,5 +53,7 @@ def main():
     # orders._drop_db_table()
 
 if __name__ == '__main__':
-    main()
-    
+    try:
+        main()
+    except Exception as e:
+        print(e)
