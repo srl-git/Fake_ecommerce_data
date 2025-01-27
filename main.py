@@ -28,8 +28,11 @@ def main():
     # products._get_sku_index('STDR')
     # products._get_upper_limit()
     # all_products = products.get_products()
+    # print(all_products)
+    # date_products = products.get_products_by_date_range(start_date='2021-01-01', end_date=None)
+    # print(date_products)
     # print(products.get_products_by_date_range(end_date='2025-01-15'))
-    # products.to_csv(start_date='2025-01-16')
+    # products.to_csv()
     # products._drop_db_table()
 
     users = Users(db_path)

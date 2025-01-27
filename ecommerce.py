@@ -138,6 +138,11 @@ class Products:
         with DatabaseConnection(self.db_path) as db:
 
             if item_sku:
+                if not (isinstance(item_sku, (str, list, tuple)) and all(isinstance(s, str) for s in item_sku)):
+                    raise ValueError(
+                'ERROR in Products.get_products(). Expected a non empty string or list of strings for item_sku argument. '
+                f'Receieved value "{item_sku}" of type {type(item_sku).__name__}.'
+                )
                 if isinstance(item_sku, str):
                     item_sku = (item_sku, )
                 db.cursor.execute(sql.product_statements.get_products_by_sku(item_sku), item_sku)
@@ -158,6 +163,15 @@ class Products:
         today = datetime.today().strftime('%Y-%m-%d')
         start_date = '0000-01-01' if start_date is None else start_date
         end_date = today if end_date is None else end_date
+
+        try:
+            datetime.fromisoformat(start_date)
+            datetime.fromisoformat(end_date)
+        except ValueError:
+            raise ValueError(
+                'ERROR in Products.get_products_by_date_range()). '
+                'Expected a string in date format YYYY-MM-DD for start_date and end_date arguments.'
+            )
 
         with DatabaseConnection(self.db_path) as db:
             db.cursor.execute(sql.product_statements.get_products_by_date_range,(start_date, end_date))
@@ -191,7 +205,13 @@ class Products:
         file_path = f'Product_report_{date_today}.csv'
 
         if start_date or end_date:
-            export_data = [product[:-1] for product in self.get_products_by_date_range(start_date,end_date)]
+            try:
+                export_data = [product[:-1] for product in self.get_products_by_date_range(start_date,end_date)]
+            except ValueError:
+                raise ValueError(
+                'ERROR in Products.to_csv(). '
+                'Expected a string in date format YYYY-MM-DD for start_date and end_date arguments.'
+                )
         else:
             export_data = [product[:-1] for product in self.get_products()]
 
