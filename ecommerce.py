@@ -6,6 +6,7 @@ import math
 import csv
 
 from faker import Faker
+from faker.config import AVAILABLE_LOCALES
 
 import sql_statements as sql
 
@@ -183,7 +184,7 @@ class Products:
 
         with DatabaseConnection(self.db_path) as db:
             db.cursor.execute(sql.product_statements.get_last_added)
-            last_added = db.cursor.fetchall()[0]
+            last_added = db.cursor.fetchone()
 
         return last_added
 
@@ -191,7 +192,7 @@ class Products:
 
         with DatabaseConnection(self.db_path) as db:
             db.cursor.execute(sql.product_statements.get_last_updated)
-            last_updated = db.cursor.fetchall()[0]
+            last_updated = db.cursor.fetchone()
 
         return last_updated
     
@@ -339,7 +340,6 @@ class Products:
                             'Invalid value in is_active argument: All elements in the list must be booleans.'
                         )
 
-
     def _get_sku_index(self, label_prefix: str) -> int:
         
         with DatabaseConnection(self.db_path) as db:
@@ -386,6 +386,9 @@ class Users:
 
     def __init__(self, db_path) -> None:
         
+        if not (isinstance(db_path, str) and db_path.endswith('.db')):
+            raise ValueError('The path to the database file must be a non empty string with a .db file extension')
+        
         self.db_path = db_path
         self._initialise_db_table()
     
@@ -403,6 +406,8 @@ class Users:
         locales: list[str]
     ) -> None: 
 
+        self._validate_create_args(num_users, locales)
+        
         users = []
 
         for i in range(num_users):
@@ -410,8 +415,8 @@ class Users:
             random_locale = random.choice(locales)
             fake = Faker(random_locale)
             profile = fake.simple_profile()
-            user_name = profile['name']
-            user_address = profile['address'].replace('\n',', ')
+            user_name = str(profile['name'])
+            user_address = str(profile['address']).replace('\n',', ')
             user_country = fake.current_country()
             user_email = self._create_email(user_name)
             date_created = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -564,6 +569,24 @@ class Users:
         with DatabaseConnection(self.db_path) as db:
             db.cursor.executemany(sql.user_statements.add_users_to_db, users)
 
+    def _validate_create_args(self, num_users: int, locales: list[str]):
+
+        if not isinstance(num_users, int) or isinstance(num_users, bool):
+            raise TypeError(
+                'ERROR in Users.create(). '
+                'Expected an integer for num_users argument. '
+                f'Received value: "{num_users}" of type: {type(num_users).__name__}.'
+            )
+        if not (isinstance(locales, list) and all(isinstance(s, str) for s in locales)):
+            raise ValueError(
+                'ERROR in Users.create(). Invalid locale format. '
+                'Expected a string or list of strings in the format ["en_GB", "fr_FR", "de_DE"].'
+            )
+        if not all (locale in AVAILABLE_LOCALES for locale in locales):
+            raise ValueError(
+                'ERROR in Users.create(). Invalid locale. '
+                f'Expected one or many values from the available locales: \n {sorted(AVAILABLE_LOCALES)}.'
+            )
 
 class Orders:
     
