@@ -28,9 +28,9 @@ def main():
     # users._drop_db_table()
     # orders._drop_db_table()
 
-    for i in range(300):
+    for i in range(1):
 
-        num_items = random.randint(1, 5)
+        num_items = random.randint(0, 3)
         num_users = random.randint(25, 50)
         num_orders = random.randint(75, 200)
 

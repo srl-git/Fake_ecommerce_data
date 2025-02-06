@@ -33,6 +33,9 @@ class Products:
         
         self._validate_create_args(label_prefix, num_items, pricing)
 
+        if num_items == 0:
+            return
+        
         products = []
         index = self._get_sku_index(label_prefix)
         date_created = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -209,19 +212,19 @@ class Products:
 
         if not (isinstance(label_prefix, str) and label_prefix.strip()):
             raise ValueError(
-                f'ERROR in Products.create(). Expected a non empty string value for label_prefix argument. '
+                'ERROR in Products.create(). Expected a non empty string value for label_prefix argument. '
                 f'Received value: "{label_prefix}" of type: {type(label_prefix).__name__}.'
             )
         
-        if not (isinstance(num_items, int) and num_items > 0):
+        if not isinstance(num_items, int):
             raise ValueError(
-                f'ERROR in Products.create(). Expected a positive integer value for num_items argument. '
+                'ERROR in Products.create(). Expected a positive integer value for num_items argument. '
                 f'Received value: "{num_items}" of type: {type(num_items).__name__}.'
             )
 
         if not isinstance(pricing, list):
             raise TypeError(
-                f'ERROR in Products.create(). Expected a list of positive floats or integers for pricing argument. '
+                'ERROR in Products.create(). Expected a list of positive floats or integers for pricing argument. '
                 f'Received value: "{pricing}" of type {type(pricing).__name__}.'
             )
         
