@@ -170,18 +170,18 @@ class Orders:
         messy_data: bool = False
     ) -> None:
         
-        date_today = datetime.today().date().strftime('%Y-%m-%d')
-        file_path = f'Order_report_{date_today}.csv'
-
         if start_date or end_date:
             try:
                 export_data = self.get_orders_by_date_range(start_date, end_date)
+                file_path = f'Order_report_{start_date}_{end_date}.csv'
             except ValueError:
                 raise ValueError(
                     'ERROR in Orders.to_csv(). '
                     'Expected a valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
                 )
         else:
+            date_today = datetime.today().date().strftime('%Y-%m-%d')
+            file_path = f'Order_report_{date_today}.csv'
             export_data = self.get_orders()
 
         if messy_data:
@@ -196,7 +196,7 @@ class Orders:
 
     def _get_random_dates(self) -> list[datetime]:
         
-        date_range = (self.end_date - self.start_date).days
+        date_range = (self.end_date.date() - self.start_date.date()).days
         order_dates = []
         current_date = self.start_date
 

@@ -177,12 +177,10 @@ class Users:
         end_date: str | None = None
     ) -> None:
 
-        date_today = datetime.today().date().strftime('%Y-%m-%d')
-        file_path = f'User_report_{date_today}.csv'
-
         if start_date or end_date:
             try:
-                export_data = self.get_users_by_date_range(start_date, end_date)
+                export_data = [user[:-1] for user in self.get_users_by_date_range(start_date, end_date)]
+                file_path = f'User_report_{start_date}_{end_date}.csv'
             except ValueError:
                 raise ValueError(
                     'ERROR in Users.to_csv(). '
@@ -190,6 +188,8 @@ class Users:
                 )
         else:
             export_data = [user[:-1] for user in self.get_users()]
+            date_today = datetime.today().date().strftime('%Y-%m-%d')
+            file_path = f'User_report_{date_today}.csv'
 
         with open(file_path, mode='w', newline='') as file:
             writer = csv.writer(file)

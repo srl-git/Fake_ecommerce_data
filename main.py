@@ -5,46 +5,67 @@ from ecommerce import Products, Users, Orders
 import random
 
 LABEL_PREFIX = 'LCR'
-NUM_ITEMS = random.randint(1, 5)
 PRICING = [18.5,19.0,20.0,21.0]
 
-NUM_USERS = random.randint(25, 50)
-LOCALES = ['en_GB','en_US','fr_FR','en_CA','de_DE']
+LOCALES = ['en_GB', 'en_US', 'fr_FR',
+           'en_CA', 'de_DE', 'en_AU', 
+           'es_ES', 'fr_BE', 'it_IT', 
+           'ja_JP', 'nl_NL', 'pl_PL',]
 
-NUM_ORDERS = random.randint(75, 200)
 MAX_ITEMS_PER_ORDER = 7
-# ORDERS_START_DATE = datetime.strptime('2025-01-18','%Y-%m-%d')
 MESSY_DATA = False
 
-
-db_path = 'database/ecommerce_data.db'
+DB_PATH = 'database/ecommerce_data.db'
 
 def main():
 
-    orders_start_date = (datetime.today() - timedelta(days = 2000))
+    orders_start_date = (datetime.today() - timedelta(days = 2100))
     orders_end_date = orders_start_date + timedelta(days=7)
-    products = Products(db_path)
-    users = Users(db_path)
-    orders = Orders(db_path)
-    products._drop_db_table()
-    users._drop_db_table()
-    orders._drop_db_table()
+    products = Products(DB_PATH)
+    users = Users(DB_PATH)
+    orders = Orders(DB_PATH)
+    # products._drop_db_table()
+    # users._drop_db_table()
+    # orders._drop_db_table()
 
-    for i in range(10):
-        users.create(NUM_USERS, LOCALES)
-        products.create(LABEL_PREFIX,NUM_ITEMS,PRICING)
-        orders.create(users,products,NUM_ORDERS,MAX_ITEMS_PER_ORDER,orders_start_date, orders_end_date.strftime('%Y-%m-%d'))
+    for i in range(300):
+
+        num_items = random.randint(1, 5)
+        num_users = random.randint(25, 50)
+        num_orders = random.randint(75, 200)
+
+        users.create(
+            num_users=num_users,
+             locales=LOCALES
+             )
+        
+        products.create(
+            label_prefix=LABEL_PREFIX,
+            num_items=num_items,
+            pricing=PRICING
+            )
+        
+        orders.create(
+            users=users,
+            products=products,
+            num_orders=num_orders,
+            max_num_items=MAX_ITEMS_PER_ORDER,
+            start_date=orders_start_date, 
+            end_date=orders_end_date.strftime('%Y-%m-%d')
+            )
+        
+        # orders.to_csv(start_date=datetime.strftime(orders_start_date,'%Y-%m-%d'))
+
         orders_start_date += timedelta(days=7)
         orders_end_date += timedelta(days=7)
 
     users.to_csv()
     orders.to_csv()
 
-if __name__ == '__main__':
-    main()
-    # try:
-    #     main()
-    # except Exception as e:
-    #     print(e)
 
-        # sqlite3.OperationalError
+if __name__ == '__main__':
+
+    try:
+        main()
+    except Exception as e:
+        print(e)

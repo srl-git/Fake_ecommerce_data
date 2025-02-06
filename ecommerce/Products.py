@@ -167,12 +167,12 @@ class Products:
         end_date: str | None = None
     ) -> None:
 
-        date_today = datetime.today().strftime('%Y-%m-%d')
-        file_path = f'Product_report_{date_today}.csv'
 
         if start_date or end_date:
             try:
                 export_data = [product[:-1] for product in self.get_products_by_date_range(start_date,end_date)]
+                file_path = f'Product_report_{start_date}_{end_date}.csv'
+
             except ValueError:
                 raise ValueError(
                 'ERROR in Products.to_csv(). '
@@ -180,6 +180,8 @@ class Products:
                 )
         else:
             export_data = [product[:-1] for product in self.get_products()]
+            date_today = datetime.today().strftime('%Y-%m-%d')
+            file_path = f'Product_report_{date_today}.csv'
 
         with open(file_path, mode='w', newline='') as file:
             
