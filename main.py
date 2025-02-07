@@ -10,7 +10,7 @@ PRICING = [18.5,19.0,20.0,21.0]
 LOCALES = ['en_GB', 'en_US', 'fr_FR',
            'en_CA', 'de_DE', 'en_AU', 
            'es_ES', 'fr_BE', 'it_IT', 
-           'ja_JP', 'nl_NL', 'pl_PL',]
+           'ja_JP', 'nl_NL', 'pt_PT',]
 
 MAX_ITEMS_PER_ORDER = 7
 MESSY_DATA = False
@@ -28,7 +28,7 @@ def main():
     # users._drop_db_table()
     # orders._drop_db_table()
 
-    for i in range(1):
+    for i in range(50):
 
         num_items = random.randint(0, 3)
         num_users = random.randint(25, 50)

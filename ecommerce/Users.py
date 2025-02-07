@@ -42,10 +42,14 @@ class Users:
         locale_weighting = [random.uniform(0.0, 1) for _ in range(len(locales))]
         normalised_locale_weighting = [w / sum(locale_weighting) for w in locale_weighting]
         
+        faker_instances = {locale: Faker(locale) for locale in locales}
+
         for i in range(num_users):
 
-            random_locale = random.choices(locales, normalised_locale_weighting)
-            fake = Faker(random_locale)
+            # random_locale = random.choices(locales, normalised_locale_weighting)
+            # fake = Faker(random_locale)
+            random_locale = random.choices(locales, normalised_locale_weighting)[0]
+            fake = faker_instances[random_locale]
             profile = fake.simple_profile()
             user_name = str(profile['name'])
             user_address = str(profile['address']).replace('\n',', ')
