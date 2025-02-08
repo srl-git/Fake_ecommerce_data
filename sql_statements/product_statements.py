@@ -2,6 +2,7 @@ create_product_table = '''
             CREATE TABLE IF NOT EXISTS Products (
                 item_sku TEXT PRIMARY KEY,
                 item_price REAL,
+                release_date DATETIME,
                 date_created DATETIME,
                 date_updated DATETIME,
                 active BOOLEAN,
@@ -37,13 +38,14 @@ set_popularity_scores = '''
 add_products_to_db = '''
             INSERT INTO Products (
                 item_sku, 
-                item_price, 
+                item_price,
+                release_date, 
                 date_created, 
                 date_updated, 
                 active, 
                 item_popularity
             ) 
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         '''
 
 update_products = '''

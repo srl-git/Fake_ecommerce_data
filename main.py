@@ -1,71 +1,75 @@
 from datetime import datetime, timedelta
-
 from ecommerce import Products, Users, Orders
-
 import random
 
+DB_PATH = 'database/ecommerce_data.db'
+
 LABEL_PREFIX = 'LCR'
-PRICING = [18.5,19.0,20.0,21.0]
+
+PRICING = [18.0, 19.0,
+           20.0, 21.0]
 
 LOCALES = ['en_GB', 'en_US', 'fr_FR',
            'en_CA', 'de_DE', 'en_AU', 
            'es_ES', 'fr_BE', 'it_IT', 
-           'ja_JP', 'nl_NL', 'pt_PT',]
+           'ja_JP', 'nl_NL', 'pt_PT']
 
 MAX_ITEMS_PER_ORDER = 7
+
 MESSY_DATA = False
-
-DB_PATH = 'database/ecommerce_data.db'
-
-def main():
-
-    orders_start_date = (datetime.today() - timedelta(days = 2100))
-    orders_end_date = orders_start_date + timedelta(days=7)
-    products = Products(DB_PATH)
-    users = Users(DB_PATH)
-    orders = Orders(DB_PATH)
-    # products._drop_db_table()
-    # users._drop_db_table()
-    # orders._drop_db_table()
-
-    for i in range(50):
-
-        num_items = random.randint(0, 3)
-        num_users = random.randint(25, 50)
-        num_orders = random.randint(75, 200)
-
-        users.create(
-            num_users=num_users,
-             locales=LOCALES
-             )
-        
-        products.create(
-            label_prefix=LABEL_PREFIX,
-            num_items=num_items,
-            pricing=PRICING
-            )
-        
-        orders.create(
-            users=users,
-            products=products,
-            num_orders=num_orders,
-            max_num_items=MAX_ITEMS_PER_ORDER,
-            start_date=orders_start_date, 
-            end_date=orders_end_date.strftime('%Y-%m-%d')
-            )
-        
-        # orders.to_csv(start_date=datetime.strftime(orders_start_date,'%Y-%m-%d'))
-
-        orders_start_date += timedelta(days=7)
-        orders_end_date += timedelta(days=7)
-
-    users.to_csv()
-    orders.to_csv()
 
 
 if __name__ == '__main__':
 
     try:
-        main()
+        products = Products(DB_PATH)
+        users = Users(DB_PATH)
+        orders = Orders(DB_PATH)
+
+        start_date = (datetime.today() - timedelta(days = 2100))
+        end_date = start_date + timedelta(days=7)
+
+        for i in range(300):
+
+            num_items = random.randint(1, 3)
+            num_users = random.randint(25, 100)
+            num_orders = round(num_users * random.uniform(1, 1.3))
+
+
+            users.create(
+                num_users,
+                LOCALES,
+                start_date
+            )
+            
+            products.create(
+                LABEL_PREFIX,
+                num_items,
+                PRICING,
+                start_date
+            )
+            
+            orders.create(
+                users,
+                products,
+                num_orders,
+                MAX_ITEMS_PER_ORDER,
+                start_date, 
+                end_date
+            )
+
+            start_date += timedelta(days=7)
+            end_date += timedelta(days=7)
+
+
+        users.to_csv()
+        products.to_csv()
+        orders.to_csv()
+                
+        # users.to_csv(start_date, end_date)
+        # products.to_csv(start_date, end_date)
+        # orders.to_csv(start_date, end_date)
+
     except Exception as e:
+        
         print(e)

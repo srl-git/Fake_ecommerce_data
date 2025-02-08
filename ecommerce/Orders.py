@@ -30,27 +30,29 @@ class Orders:
         num_orders: int,
         max_num_items: int,
         start_date: str | datetime,
-        end_date: str ='today'
+        end_date: str | datetime = datetime.now()
     ) -> None:
         
         try:
             self.users = users.get_users()
             self.products = products.get_products()
+            if len(self.products) < 1 or len(self.users) < 1:
+                raise ValueError("ERROR in Orders.create(): Can only generate orders with at least 1 user and product in the database.")
 
         except:
-            raise ValueError("ERROR initiating Orders class: Can't generate orders without any users or products in the database.")
+            raise ValueError("ERROR in Orders.create(): Can't generate orders without any users or products in the database.")
 
         self._validate_create_args(num_orders, max_num_items, start_date, end_date)
 
         self.num_orders = num_orders
-        self.item_skus = [product[0] for product in self.products if product[4] == 1]
-        self.item_prices = {product[0]: product[1] for product in self.products if product[4] == 1}
-        self.item_popularities = [product[5] for product in self.products if product[4] == 1]
+        self.item_skus = [product[0] for product in self.products if product[5] == 1]
+        self.item_prices = {product[0]: product[1] for product in self.products if product[5] == 1}
+        self.item_popularities = [product[6] for product in self.products if product[5] == 1]
         self.user_ids = [user[0] for user in self.users]
         self.user_popularities = [user[7] for user in self.users]
         self.max_num_items = max_num_items
         self.start_date = start_date if isinstance(start_date, datetime) else datetime.strptime(start_date, '%Y-%m-%d')
-        self.end_date = datetime.today() if end_date == 'today' else datetime.strptime(end_date, '%Y-%m-%d')
+        self.end_date = end_date if isinstance(end_date, datetime) else datetime.strptime(end_date, '%Y-%m-%d')
         self.order_dates = self._get_random_dates()
         last_order_id = self._get_last_order_id()
 
@@ -101,21 +103,25 @@ class Orders:
     
     def get_orders_by_date_range(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None
+        start_date: str | datetime | None = None,
+        end_date: str | datetime | None = None
     ) -> list[tuple]:
 
-        today = datetime.today().strftime('%Y-%m-%d')
         start_date = '0000-01-01' if start_date is None else start_date
-        end_date = today if end_date is None else end_date
+        end_date = datetime.today() if end_date is None else end_date
 
+        if isinstance(start_date, datetime):
+            start_date = start_date.strftime('%Y-%m-%d')
+        if isinstance(end_date, datetime):
+            end_date = end_date.strftime('%Y-%m-%d')
+            
         try:
             datetime.fromisoformat(start_date)
             datetime.fromisoformat(end_date)
         except ValueError:
             raise ValueError(
                 'ERROR in Orders.get_orders_by_date_range(). '
-                'Expected a valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
+                'Expected a datetime object or a valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
             )
         
         with DatabaseConnection(self.db_path) as db:
@@ -165,24 +171,33 @@ class Orders:
 
     def to_csv(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
+        start_date: str | datetime | None = None,
+        end_date: str | datetime | None = None,
         messy_data: bool = False
     ) -> None:
-        
+              
         if start_date or end_date:
             try:
                 export_data = self.get_orders_by_date_range(start_date, end_date)
-                file_path = f'Order_report_{start_date}_{end_date}.csv'
+
+                if isinstance(start_date, datetime):
+                    start_date = start_date.strftime('%Y-%m-%d')
+                if isinstance(end_date, datetime):
+                    end_date = end_date.strftime('%Y-%m-%d')
+
+                start_date = start_date if start_date else ''
+                end_date = f'_{end_date}' if end_date else ''
+                file_path = f'Order_report_{start_date}{end_date}.csv'
+            
             except ValueError:
                 raise ValueError(
                     'ERROR in Orders.to_csv(). '
-                    'Expected a valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
+                    'Expected a datetime object or a valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
                 )
         else:
+            export_data = self.get_orders()
             date_today = datetime.today().date().strftime('%Y-%m-%d')
             file_path = f'Order_report_{date_today}.csv'
-            export_data = self.get_orders()
 
         if messy_data:
             export_data = self._introduce_messy_data(export_data)
@@ -262,7 +277,13 @@ class Orders:
             
         return last_order_id
     
-    def _validate_create_args(self, num_orders: int, max_num_items: int, start_date: str | datetime, end_date: str):
+    def _validate_create_args(
+            self, 
+            num_orders: int, 
+            max_num_items: int, 
+            start_date: str | datetime, 
+            end_date: str | datetime
+    ) -> None:
 
         if not (isinstance(num_orders, int) and num_orders > 0) or isinstance(num_orders, bool):
             raise ValueError(
@@ -281,10 +302,12 @@ class Orders:
         try:
             if not isinstance(start_date, datetime):
                 datetime.fromisoformat(start_date)
-            if end_date != 'today':
+
+            if not isinstance(end_date, datetime):
                 datetime.fromisoformat(end_date)
+
         except ValueError:
             raise ValueError(
                 'ERROR in Orders.create(). '
-                'Expected a valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
+                'Expected a datetime object or valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
             )

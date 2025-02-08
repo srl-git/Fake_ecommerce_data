@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 import csv
 
@@ -28,19 +28,24 @@ class Products:
         self, 
         label_prefix: str, 
         num_items: int, 
-        pricing: list[float]
+        pricing: list[float],
+        creation_date: str | datetime = datetime.now()
     ) -> None:
         
-        self._validate_create_args(label_prefix, num_items, pricing)
+        self._validate_create_args(label_prefix, num_items, pricing, creation_date)
 
         if num_items == 0:
             return
         
-        products = []
-        index = self._get_sku_index(label_prefix)
-        date_created = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        if not isinstance(creation_date, datetime):
+            creation_date = datetime.strptime(creation_date, '%Y-%m-%d')
+
+        release_date = (creation_date + timedelta(weeks=6)).strftime('%Y-%m-%d')
+        date_created = creation_date.strftime('%Y-%m-%d')
         date_updated = date_created
         popularity_upper_limit = self._get_upper_limit()
+        index = self._get_sku_index(label_prefix)
+        products = []
         
         for i in range(num_items):
 
@@ -48,7 +53,7 @@ class Products:
             item_price = random.choice(pricing)
             weighting = random.uniform(0.0, popularity_upper_limit)
             is_active = True
-            product = (item_sku, item_price, date_created, date_updated, is_active, weighting)
+            product = (item_sku, item_price, release_date, date_created, date_updated, is_active, weighting)
             products.append(product)
 
         self._add_to_db(products)
@@ -84,8 +89,8 @@ class Products:
                 sku_to_update = product[0]
                 index = item_sku.index(sku_to_update)
                 price_updated = item_price[index] if item_price is not None else product[1]
-                date_updated = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
-                is_active_updated = is_active[index] if is_active is not None else product[4]
+                date_updated = datetime.today().strftime('%Y-%m-%d')
+                is_active_updated = is_active[index] if is_active is not None else product[5]
                 update_data.append((price_updated, date_updated, is_active_updated, sku_to_update))
 
             with DatabaseConnection(self.db_path) as db:
@@ -125,13 +130,17 @@ class Products:
     
     def get_products_by_date_range(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None
+        start_date: str | datetime | None = None,
+        end_date: str | datetime | None = None
     ) -> list[tuple]:
 
-        today = datetime.today().strftime('%Y-%m-%d')
         start_date = '0000-01-01' if start_date is None else start_date
-        end_date = today if end_date is None else end_date
+        end_date = datetime.today() if end_date is None else end_date
+
+        if isinstance(start_date, datetime):
+            start_date = start_date.strftime('%Y-%m-%d')
+        if isinstance(end_date, datetime):
+            end_date = end_date.strftime('%Y-%m-%d')
 
         try:
             datetime.fromisoformat(start_date)
@@ -139,7 +148,7 @@ class Products:
         except ValueError:
             raise ValueError(
                 'ERROR in Products.get_products_by_date_range()). '
-                'Expected a string in date format YYYY-MM-DD for start_date and end_date arguments.'
+                'Expected a datetime object or a valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
             )
 
         with DatabaseConnection(self.db_path) as db:
@@ -166,20 +175,27 @@ class Products:
     
     def to_csv(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None
+        start_date: str | datetime | None = None,
+        end_date: str | datetime | None = None
     ) -> None:
-
 
         if start_date or end_date:
             try:
                 export_data = [product[:-1] for product in self.get_products_by_date_range(start_date,end_date)]
-                file_path = f'Product_report_{start_date}_{end_date}.csv'
+                
+                if isinstance(start_date, datetime):
+                    start_date = start_date.strftime('%Y-%m-%d')
+                if isinstance(end_date, datetime):
+                    end_date = end_date.strftime('%Y-%m-%d')
+
+                start_date = start_date if start_date else ''
+                end_date = f'_{end_date}' if end_date else ''                    
+                file_path = f'Product_report_{start_date}{end_date}.csv'
 
             except ValueError:
                 raise ValueError(
                 'ERROR in Products.to_csv(). '
-                'Expected a string in date format YYYY-MM-DD for start_date and end_date arguments.'
+                'Expected a datetime object or a valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
                 )
         else:
             export_data = [product[:-1] for product in self.get_products()]
@@ -189,7 +205,7 @@ class Products:
         with open(file_path, mode='w', newline='') as file:
             
             writer = csv.writer(file)
-            writer.writerow(['Product SKU', 'Price', 'Date Created', 'Date Updated', 'Active'])
+            writer.writerow(['Product SKU', 'Price', 'Release Date', 'Date Created', 'Date Updated', 'Active'])
             
             for row in export_data:
                 writer.writerow(row)
@@ -208,7 +224,9 @@ class Products:
         self, 
         label_prefix: str, 
         num_items: int, 
-        pricing: list[float]) -> None:
+        pricing: list[float],
+        creation_date: str | datetime
+    ) -> None:
 
         if not (isinstance(label_prefix, str) and label_prefix.strip()):
             raise ValueError(
@@ -232,6 +250,15 @@ class Products:
             raise ValueError(
                 'ERROR in Products.create(). Invalid value in pricing argument: '
                 'All elements in the list must be positive integers or floats.'
+            )
+        
+        try:
+            if not isinstance(creation_date, datetime):
+                datetime.fromisoformat(creation_date)
+        except ValueError:
+            raise ValueError(
+                'ERROR in Products.create(). '
+                'Expected a datetime object or valid date string in format YYYY-MM-DD for creation_date argument.'
             )
 
     def _validate_update_args(

@@ -30,24 +30,23 @@ class Users:
     def create(
         self,
         num_users: int,
-        locales: list[str]
+        locales: list[str],
+        creation_date: str | datetime = datetime.now()
     ) -> None: 
 
-        self._validate_create_args(num_users, locales)
+        self._validate_create_args(num_users, locales, creation_date)
         
-        users = []
+        if isinstance(creation_date, datetime):
+            creation_date = creation_date.strftime('%Y-%m-%d')
 
         popularity_upper_limit = self._get_upper_limit()
-
         locale_weighting = [random.uniform(0.0, 1) for _ in range(len(locales))]
         normalised_locale_weighting = [w / sum(locale_weighting) for w in locale_weighting]
-        
         faker_instances = {locale: Faker(locale) for locale in locales}
+        users = []
 
         for i in range(num_users):
 
-            # random_locale = random.choices(locales, normalised_locale_weighting)
-            # fake = Faker(random_locale)
             random_locale = random.choices(locales, normalised_locale_weighting)[0]
             fake = faker_instances[random_locale]
             profile = fake.simple_profile()
@@ -55,8 +54,7 @@ class Users:
             user_address = str(profile['address']).replace('\n',', ')
             user_country = fake.current_country()
             user_email = self._create_email(user_name)
-            date_created = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            date_updated = date_created
+            date_created = date_updated = creation_date
             user_weighting = random.uniform(0.0, popularity_upper_limit)
             user = (user_name, user_address, user_country, user_email, date_created, date_updated, user_weighting)
             users.append(user)
@@ -102,7 +100,7 @@ class Users:
                 user_address_updated = user_address[index] if user_address is not None else user[2]
                 user_country_updated = user_country[index] if user_country is not None else user[3]
                 user_email_updated = user_email[index] if user_email is not None else user[4]
-                date_updated = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+                date_updated = datetime.today().strftime('%Y-%m-%d')
                 update_data.append((user_name_updated, user_address_updated, user_country_updated, user_email_updated, date_updated, user_id_to_update))
 
             with DatabaseConnection(self.db_path) as db:
@@ -136,13 +134,17 @@ class Users:
 
     def get_users_by_date_range(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None
+        start_date: str | datetime | None = None,
+        end_date: str | datetime | None = None
         ) -> list[tuple]:
 
-        today = datetime.today().strftime('%Y-%m-%d')
         start_date = '0000-01-01' if start_date is None else start_date
-        end_date = today if end_date is None else end_date
+        end_date = datetime.today() if end_date is None else end_date
+
+        if isinstance(start_date, datetime):
+            start_date = start_date.strftime('%Y-%m-%d')
+        if isinstance(end_date, datetime):
+            end_date = end_date.strftime('%Y-%m-%d')
 
         try:
             datetime.fromisoformat(start_date)
@@ -150,7 +152,7 @@ class Users:
         except ValueError:
             raise ValueError(
                 'ERROR in Users.get_users_by_date_range()). '
-                'Expected a valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
+                'Expected a datetime object or a valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
             )
         
         with DatabaseConnection(self.db_path) as db:
@@ -177,14 +179,23 @@ class Users:
     
     def to_csv(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None
+        start_date: str | datetime | None = None,
+        end_date: str | datetime | None = None
     ) -> None:
 
         if start_date or end_date:
             try:
                 export_data = [user[:-1] for user in self.get_users_by_date_range(start_date, end_date)]
-                file_path = f'User_report_{start_date}_{end_date}.csv'
+                
+                if isinstance(start_date, datetime):
+                    start_date = start_date.strftime('%Y-%m-%d')
+                if isinstance(end_date, datetime):
+                    end_date = end_date.strftime('%Y-%m-%d')
+                
+                start_date = start_date if start_date else ''
+                end_date = f'_{end_date}' if end_date else ''
+                file_path = f'User_report_{start_date}{end_date}.csv'
+                
             except ValueError:
                 raise ValueError(
                     'ERROR in Users.to_csv(). '
@@ -248,7 +259,12 @@ class Users:
         with DatabaseConnection(self.db_path) as db:
             db.cursor.executemany(sql.user_statements.set_popularity_scores, (update_scores))
 
-    def _validate_create_args(self, num_users: int, locales: list[str]) -> None:
+    def _validate_create_args(
+            self, 
+            num_users: int, 
+            locales: list[str],
+            creation_date: str | datetime
+    ) -> None:
 
         if not isinstance(num_users, int) or isinstance(num_users, bool):
             raise TypeError(
@@ -265,6 +281,15 @@ class Users:
             raise ValueError(
                 'ERROR in Users.create(). Invalid locale. '
                 f'Expected one or many values from the available locales: \n {sorted(AVAILABLE_LOCALES)}.'
+            )
+
+        try:
+            if not isinstance(creation_date, datetime):
+                datetime.fromisoformat(creation_date)
+        except ValueError:
+            raise ValueError(
+                'ERROR in Users.create(). '
+                'Expected a datetime object or valid date string in format YYYY-MM-DD for creation_date argument.'
             )
 
     def _validate_update_args( 
