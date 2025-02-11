@@ -32,22 +32,26 @@ class Users:
         num_users: int,
         locales: list[str],
         creation_date: str | datetime = datetime.now()
-    ) -> None: 
+    ) -> list[tuple]: 
 
         self._validate_create_args(num_users, locales, creation_date)
-        
+        self.locales = locales
+
         if isinstance(creation_date, datetime):
             creation_date = creation_date.strftime('%Y-%m-%d')
 
         popularity_upper_limit = self._get_upper_limit()
-        locale_weighting = [random.uniform(0.0, 1) for _ in range(len(locales))]
+        locale_weighting = [random.uniform(0.0, 1) for _ in range(len(self.locales))]
         normalised_locale_weighting = [w / sum(locale_weighting) for w in locale_weighting]
-        faker_instances = {locale: Faker(locale) for locale in locales}
+        faker_instances = {locale: Faker(locale) for locale in self.locales}
         users = []
+
+        last_user_id = self._get_last_user_id()
 
         for i in range(num_users):
 
-            random_locale = random.choices(locales, normalised_locale_weighting)[0]
+            user_id = (last_user_id + 1) + i
+            random_locale = random.choices(self.locales, normalised_locale_weighting)[0]
             fake = faker_instances[random_locale]
             profile = fake.simple_profile()
             user_name = str(profile['name'])
@@ -56,10 +60,12 @@ class Users:
             user_email = self._create_email(user_name)
             date_created = date_updated = creation_date
             user_weighting = random.uniform(0.0, popularity_upper_limit)
-            user = (user_name, user_address, user_country, user_email, date_created, date_updated, user_weighting)
+            user = (user_id, user_name, user_address, user_country, user_email, date_created, date_updated, user_weighting)
             users.append(user)
 
         self._add_to_db(users)
+        
+        return users
 
     def update(
         self,
@@ -236,6 +242,15 @@ class Users:
 
         self._set_popularity_scores()
 
+    def _get_last_user_id(self) -> int:
+
+        with DatabaseConnection(self.db_path) as db:
+            db.cursor.execute(sql.user_statements.get_last_user_id)
+            result = db.cursor.fetchone()
+            last_user_id = result[0] if result is not None else 0
+            
+        return last_user_id
+    
     def _get_upper_limit(self) -> float:
 
         with DatabaseConnection(self.db_path) as db:

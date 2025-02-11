@@ -32,10 +32,10 @@ class Products:
         creation_date: str | datetime = datetime.now()
     ) -> None:
         
-        self._validate_create_args(label_prefix, num_items, pricing, creation_date)
-
         if num_items == 0:
             return
+        
+        self._validate_create_args(label_prefix, num_items, pricing, creation_date)
         
         if not isinstance(creation_date, datetime):
             creation_date = datetime.strptime(creation_date, '%Y-%m-%d')

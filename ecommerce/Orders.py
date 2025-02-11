@@ -23,6 +23,53 @@ class Orders:
         
         return f'There are {self.get_count_orders()} orders in the database'
     
+    def new_create(
+        self, 
+        users: Users,
+        locales, 
+        products: Products,
+        num_orders: int,
+        max_num_items: int,
+        start_date: str | datetime,
+        end_date: str | datetime = datetime.now()
+    ) -> None:
+        
+        # random percentage split of new users to old users
+        ratio_previous_users = random.uniform(0.0, 0.5)
+        num_previous_users = round(num_orders * ratio_previous_users)
+        # generate array of old users
+        # previous_users = products.get_random_users(num_previous_users)
+
+        with DatabaseConnection(self.db_path) as db:
+            db.cursor.execute('''
+            SELECT *
+            FROM Users
+            ORDER BY RANDOM()
+            LIMIT ?
+        ''',(num_previous_users,))
+            
+            previous_users = db.cursor.fetchall()
+        
+        # create new users and load into an array or same array?
+        num_new_users = num_orders - len(previous_users)
+        new_users = users.create(num_new_users, locales)
+
+        # combine users arrays and random.shuffle()
+        all_users = previous_users + new_users
+        random.shuffle(all_users)
+
+        print(f'{num_orders=}')
+        print(f'{num_previous_users=}')
+        print(f'{num_new_users=}')
+        
+        for user in all_users:
+            print(user)
+      
+        # create order logic
+        
+        
+        pass
+
     def create(
         self, 
         users: Users, 

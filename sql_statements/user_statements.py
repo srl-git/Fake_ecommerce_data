@@ -16,6 +16,7 @@ drop_user_table = '''
 
 add_users_to_db = '''
             INSERT INTO Users (
+                user_id,
                 user_name,
                 user_address,
                 user_country,
@@ -24,7 +25,7 @@ add_users_to_db = '''
                 date_updated,
                 user_popularity
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         '''
 
 update_users = '''
@@ -67,6 +68,13 @@ get_last_updated = '''
             FROM Users
             ORDER BY date_updated DESC
             LIMIT 1
+        '''
+
+get_last_user_id = '''
+            SELECT user_id
+            FROM Users
+            ORDER BY rowid DESC
+            LIMIT 1       
         '''
 
 get_upper_limit = '''

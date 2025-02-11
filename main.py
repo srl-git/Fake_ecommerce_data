@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from ecommerce import Products, Users, Orders
+from ecommerce import Ecommerce, Products, Users, Orders
 import random
 
 DB_PATH = 'database/ecommerce_data.db'
@@ -21,55 +21,63 @@ MESSY_DATA = False
 
 if __name__ == '__main__':
 
-    try:
-        products = Products(DB_PATH)
-        users = Users(DB_PATH)
-        orders = Orders(DB_PATH)
+    ecommerce = Ecommerce(DB_PATH)
 
-        start_date = (datetime.today() - timedelta(days = 2100))
-        end_date = start_date + timedelta(days=7)
+    print(ecommerce)
 
-        for i in range(300):
+    ecommerce.users.create()
 
-            num_items = random.randint(1, 3)
-            num_users = random.randint(25, 100)
-            num_orders = round(num_users * random.uniform(1, 1.3))
+    # try:
+    #     products = Products(DB_PATH)
+    #     users = Users(DB_PATH)
+    #     orders = Orders(DB_PATH)
 
+    #     start_date = (datetime.today() - timedelta(days = 2100))
+    #     end_date = start_date + timedelta(days=7)
 
-            users.create(
-                num_users,
-                LOCALES,
-                start_date
-            )
+    #     for i in range(1):
+
+    #         # num_items = random.randint(1, 3)
+    #         # num_users = random.randint(25, 100)
+    #         # num_orders = round(num_users * random.uniform(1, 1.3))
+
+    #         num_orders = 10
+
+    #         # users.create(
+    #         #     5,
+    #         #     LOCALES,
+    #         #     start_date
+    #         # )
             
-            products.create(
-                LABEL_PREFIX,
-                num_items,
-                PRICING,
-                start_date
-            )
+    #         # products.create(
+    #         #     LABEL_PREFIX,
+    #         #     num_items,
+    #         #     PRICING,
+    #         #     start_date
+    #         # )
             
-            orders.create(
-                users,
-                products,
-                num_orders,
-                MAX_ITEMS_PER_ORDER,
-                start_date, 
-                end_date
-            )
+    #         orders.new_create(
+    #             users,
+    #             LOCALES,
+    #             products,
+    #             num_orders,
+    #             MAX_ITEMS_PER_ORDER,
+    #             start_date, 
+    #             end_date
+    #         )
 
-            start_date += timedelta(days=7)
-            end_date += timedelta(days=7)
+            # start_date += timedelta(days=7)
+            # end_date += timedelta(days=7)
 
 
-        users.to_csv()
-        products.to_csv()
-        orders.to_csv()
+        # users.to_csv()
+        # products.to_csv()
+        # orders.to_csv()
                 
         # users.to_csv(start_date, end_date)
         # products.to_csv(start_date, end_date)
         # orders.to_csv(start_date, end_date)
 
-    except Exception as e:
+    # except Exception as e:
         
-        print(e)
+    #     print(e)
