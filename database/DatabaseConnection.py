@@ -13,6 +13,7 @@ class DatabaseConnection:
 
         self.connection = sqlite3.connect(self.path)
         self.cursor = self.connection.cursor()
+        self.cursor.execute("BEGIN TRANSACTION")
 
         return self
     

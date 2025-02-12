@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from database.DatabaseConnection import DatabaseConnection
 from ecommerce.Products import Products
 from ecommerce.Users import Users
@@ -6,6 +8,9 @@ from ecommerce.Orders import Orders
 class Ecommerce:
     
     def __init__(self, db_path: str) -> None:
+        
+        if not (isinstance(db_path, str) and db_path.endswith('.db')):
+            raise ValueError('The path to the database file must be a non empty string with a .db file extension')
         
         self.db_path = db_path
 
@@ -25,4 +30,24 @@ class Ecommerce:
 
         return f'There are {num_products} products, {num_users} users, and {num_orders} orders in the database'
     
-    
+    def create_orders_and_users(
+        self, 
+        locales, 
+        num_orders: int,
+        max_num_items: int,
+        start_date: str | datetime = datetime.now(),
+        end_date: str | datetime = datetime.now()
+    ) -> None:  
+
+        self.orders.new_create(self.users, locales, self.products, num_orders, max_num_items, start_date, end_date)
+          
+
+    def to_csv(
+        self,
+        start_date: str | datetime | None = None,
+        end_date: str | datetime | None = None
+    ) -> None:
+
+        self.products.to_csv(start_date, end_date)
+        self.users.to_csv(start_date, end_date)
+        self.orders.to_csv(start_date, end_date)

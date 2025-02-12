@@ -30,25 +30,25 @@ class Orders:
         products: Products,
         num_orders: int,
         max_num_items: int,
-        start_date: str | datetime,
+        start_date: str | datetime = datetime.now(),
         end_date: str | datetime = datetime.now()
     ) -> None:
         
         # random percentage split of new users to old users
         ratio_previous_users = random.uniform(0.0, 0.5)
         num_previous_users = round(num_orders * ratio_previous_users)
-        # generate array of old users
-        # previous_users = products.get_random_users(num_previous_users)
+        previous_users = users.get_random_users(num_previous_users)
 
-        with DatabaseConnection(self.db_path) as db:
-            db.cursor.execute('''
-            SELECT *
-            FROM Users
-            ORDER BY RANDOM()
-            LIMIT ?
-        ''',(num_previous_users,))
+        # with DatabaseConnection(self.db_path) as db:
+        #     db.cursor.execute('''
+        #     SELECT *
+        #     FROM Users
+        #     ORDER BY RANDOM()
+        #     LIMIT ?
+        # ''',(num_previous_users,))
             
-            previous_users = db.cursor.fetchall()
+            # previous_users = db.cursor.fetchall()
+
         
         # create new users and load into an array or same array?
         num_new_users = num_orders - len(previous_users)
@@ -58,17 +58,61 @@ class Orders:
         all_users = previous_users + new_users
         random.shuffle(all_users)
 
-        print(f'{num_orders=}')
-        print(f'{num_previous_users=}')
-        print(f'{num_new_users=}')
-        
-        for user in all_users:
-            print(user)
-      
         # create order logic
-        
-        
-        pass
+        try:
+            # self.users = users.get_users()
+            self.products = products.get_products()
+            if len(self.products) < 1 or len(all_users) < 1:
+                raise ValueError("ERROR in Orders.create(): Can only generate orders with at least 1 user and product in the database.")
+
+        except:
+            raise ValueError("ERROR in Orders.create(): Can't generate orders without any users or products in the database.")
+
+        self._validate_create_args(num_orders, max_num_items, start_date, end_date)
+
+        self.items = {product[0]: product[1] for product in self.products if product[5] == 1}
+        self.item_skus = list(self.items.keys())
+        # self.item_prices = 
+        # self.item_skus = [product[0] for product in self.products if product[5] == 1]
+        # self.item_prices = {product[0]: product[1] for product in self.products if product[5] == 1}
+        self.item_popularities = [product[6] for product in self.products if product[5] == 1]
+        self.user_ids = [user[0] for user in all_users]
+        # self.user_popularities = [user[7] for user in self.users]
+        self.num_orders = num_orders
+        self.max_num_items = max_num_items
+        self.start_date = start_date if isinstance(start_date, datetime) else datetime.strptime(start_date, '%Y-%m-%d')
+        self.end_date = end_date if isinstance(end_date, datetime) else datetime.strptime(end_date, '%Y-%m-%d')
+        self.order_dates = self._get_random_dates()
+        last_order_id = self._get_last_order_id()
+
+        self.orders = []
+
+        for i in range(self.num_orders):
+
+            items_in_order = self._get_num_items()
+            order_id = (last_order_id + 1) + i
+            user_id = self.user_ids[i]
+            date_created = self.order_dates[i].date().strftime('%Y-%m-%d')
+            date_updated = date_created
+            
+            order_lines = {}
+
+            for j in range(items_in_order):
+
+                # random_product = random.choices(self.item_skus, self.item_popularities)[0]
+                random_product = random.choices(self.item_skus, self.item_popularities)[0]
+
+                if random_product in order_lines:
+                    order_lines[random_product] += 1
+                else:
+                    order_lines[random_product] = 1
+
+            for item_sku, qty in order_lines.items():
+
+                order = (order_id, user_id, item_sku, qty, self.items[item_sku], date_created, date_updated)
+                self.orders.append(order)
+            
+        self._add_to_db(self.orders)
 
     def create(
         self, 
@@ -76,7 +120,7 @@ class Orders:
         products: Products,
         num_orders: int,
         max_num_items: int,
-        start_date: str | datetime,
+        start_date: str | datetime = datetime.now(),
         end_date: str | datetime = datetime.now()
     ) -> None:
         
@@ -91,12 +135,12 @@ class Orders:
 
         self._validate_create_args(num_orders, max_num_items, start_date, end_date)
 
-        self.num_orders = num_orders
         self.item_skus = [product[0] for product in self.products if product[5] == 1]
         self.item_prices = {product[0]: product[1] for product in self.products if product[5] == 1}
         self.item_popularities = [product[6] for product in self.products if product[5] == 1]
         self.user_ids = [user[0] for user in self.users]
         self.user_popularities = [user[7] for user in self.users]
+        self.num_orders = num_orders
         self.max_num_items = max_num_items
         self.start_date = start_date if isinstance(start_date, datetime) else datetime.strptime(start_date, '%Y-%m-%d')
         self.end_date = end_date if isinstance(end_date, datetime) else datetime.strptime(end_date, '%Y-%m-%d')
@@ -129,7 +173,7 @@ class Orders:
                 order = (order_id, random_user_id, item_sku, qty, self.item_prices[item_sku], date_created, date_updated)
                 self.orders.append(order)
             
-        self._add_to_db(self.orders)
+        # self._add_to_db(self.orders)
 
 
     def get_count_orders(self) -> int:
@@ -311,7 +355,7 @@ class Orders:
             db.cursor.execute(sql.order_statements.drop_order_table) 
 
     def _add_to_db(self, orders: list[tuple]) -> None:
-
+        
         with DatabaseConnection(self.db_path) as db:
             db.cursor.executemany(sql.order_statements.add_orders_to_db, orders)
 
