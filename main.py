@@ -21,59 +21,32 @@ MESSY_DATA = False
 
 def main():
 
-    try:
+    ecommerce = Ecommerce(DB_PATH)
+    
+    # num_items = random.randint(1, 3)
 
-        ecommerce = Ecommerce(DB_PATH)
+    ecommerce.products.create(
+                LABEL_PREFIX,
+                25,
+                PRICING
+            )
 
-        start_date = (datetime.today() - timedelta(days = 2100))
-        end_date = start_date + timedelta(days=7)
+    num_orders = 10000
         
-        # num_items = random.randint(1, 3)
-
-        # ecommerce.products.create(
-        #             LABEL_PREFIX,
-        #             num_items,
-        #             PRICING
-        #         )
-
-        num_orders = 10000
-
-            # users.create(
-            #     5,
-            #     LOCALES,
-            #     start_date
-            # )
+    ecommerce.create_orders_and_users(
+        LOCALES,
+        100,
+        MAX_ITEMS_PER_ORDER
+    )
             
-            
-        # ecommerce.orders.new_create(
-        #     ecommerce.users,
-        #     LOCALES,
-        #     ecommerce.products,
-        #     num_orders,
-        #     MAX_ITEMS_PER_ORDER
-        # )
-
-        ecommerce.create_orders_and_users(
-            LOCALES,
-            num_orders,
-            MAX_ITEMS_PER_ORDER,
-            start_date,
-            end_date
-        )
-
-        start_date += timedelta(days=7)
-        end_date += timedelta(days=7)
-                
-        print(ecommerce)
-        # users.to_csv(start_date, end_date)
-        # products.to_csv(start_date, end_date)
-        # orders.to_csv(start_date, end_date)
-
-    except Exception as e:
-        
-        print(e)
-
+    # ecommerce.to_csv()
+    
 
 if __name__ == '__main__':
+    main()
+#    cProfile.run('main()',sort='tottime')
+    # try:
 
-   cProfile.run('main()',sort='tottime')
+    # except Exception as e:
+        
+    #     print(e)

@@ -23,145 +23,69 @@ class Orders:
         
         return f'There are {self.get_count_orders()} orders in the database'
     
-    def new_create(
+    def create(
         self, 
         users: Users,
-        locales, 
+        locales: list[str],
         products: Products,
         num_orders: int,
-        max_num_items: int,
-        start_date: str | datetime = datetime.now(),
-        end_date: str | datetime = datetime.now()
+        max_num_items: int
     ) -> None:
         
-        # random percentage split of new users to old users
+        self._validate_create_args(users, products, num_orders, max_num_items)
+
+        items = self._get_active_products(products)
+        all_user_ids = self._get_user_ids(users, locales, num_orders)
+        orders = self._generate_order_lines(items, all_user_ids, num_orders, max_num_items)
+        
+        self._add_to_db(orders)
+
+    def _get_active_products(self, products: Products) -> dict:
+
+        try:
+            all_products = products.get_products()
+            if len(all_products) < 1:
+                raise ValueError
+        except:
+            raise ValueError("ERROR in Orders.create(): Can't generate orders without any products in the database.")
+        
+        return {
+            product[0]: {'item_price': product[1], 'item_popularity': product[6] } 
+            for product in all_products if product[5] == 1
+        }
+    
+    def _get_user_ids(self, users: Users, locales: list[str], num_orders: int) -> list[int]:
+
         ratio_previous_users = random.uniform(0.0, 0.5)
         num_previous_users = round(num_orders * ratio_previous_users)
         previous_users = users.get_random_users(num_previous_users)
-
-        # with DatabaseConnection(self.db_path) as db:
-        #     db.cursor.execute('''
-        #     SELECT *
-        #     FROM Users
-        #     ORDER BY RANDOM()
-        #     LIMIT ?
-        # ''',(num_previous_users,))
-            
-            # previous_users = db.cursor.fetchall()
-
-        
-        # create new users and load into an array or same array?
         num_new_users = num_orders - len(previous_users)
         new_users = users.create(num_new_users, locales)
-
-        # combine users arrays and random.shuffle()
         all_users = previous_users + new_users
         random.shuffle(all_users)
-
-        # create order logic
-        try:
-            # self.users = users.get_users()
-            self.products = products.get_products()
-            if len(self.products) < 1 or len(all_users) < 1:
-                raise ValueError("ERROR in Orders.create(): Can only generate orders with at least 1 user and product in the database.")
-
-        except:
-            raise ValueError("ERROR in Orders.create(): Can't generate orders without any users or products in the database.")
-
-        self._validate_create_args(num_orders, max_num_items, start_date, end_date)
-
-        self.items = {product[0]: product[1] for product in self.products if product[5] == 1}
-        self.item_skus = list(self.items.keys())
-        # self.item_prices = 
-        # self.item_skus = [product[0] for product in self.products if product[5] == 1]
-        # self.item_prices = {product[0]: product[1] for product in self.products if product[5] == 1}
-        self.item_popularities = [product[6] for product in self.products if product[5] == 1]
-        self.user_ids = [user[0] for user in all_users]
-        # self.user_popularities = [user[7] for user in self.users]
-        self.num_orders = num_orders
-        self.max_num_items = max_num_items
-        self.start_date = start_date if isinstance(start_date, datetime) else datetime.strptime(start_date, '%Y-%m-%d')
-        self.end_date = end_date if isinstance(end_date, datetime) else datetime.strptime(end_date, '%Y-%m-%d')
-        self.order_dates = self._get_random_dates()
-        last_order_id = self._get_last_order_id()
-
-        self.orders = []
-
-        for i in range(self.num_orders):
-
-            items_in_order = self._get_num_items()
-            order_id = (last_order_id + 1) + i
-            user_id = self.user_ids[i]
-            date_created = self.order_dates[i].date().strftime('%Y-%m-%d')
-            date_updated = date_created
-            
-            order_lines = {}
-
-            for j in range(items_in_order):
-
-                # random_product = random.choices(self.item_skus, self.item_popularities)[0]
-                random_product = random.choices(self.item_skus, self.item_popularities)[0]
-
-                if random_product in order_lines:
-                    order_lines[random_product] += 1
-                else:
-                    order_lines[random_product] = 1
-
-            for item_sku, qty in order_lines.items():
-
-                order = (order_id, user_id, item_sku, qty, self.items[item_sku], date_created, date_updated)
-                self.orders.append(order)
-            
-        self._add_to_db(self.orders)
-
-    def create(
-        self, 
-        users: Users, 
-        products: Products,
-        num_orders: int,
-        max_num_items: int,
-        start_date: str | datetime = datetime.now(),
-        end_date: str | datetime = datetime.now()
-    ) -> None:
         
-        try:
-            self.users = users.get_users()
-            self.products = products.get_products()
-            if len(self.products) < 1 or len(self.users) < 1:
-                raise ValueError("ERROR in Orders.create(): Can only generate orders with at least 1 user and product in the database.")
+        return [user[0] for user in all_users]
 
-        except:
-            raise ValueError("ERROR in Orders.create(): Can't generate orders without any users or products in the database.")
+    def _generate_order_lines(self, items: dict, user_ids: list[int], num_orders: int, max_num_items: int) -> list[tuple]:
 
-        self._validate_create_args(num_orders, max_num_items, start_date, end_date)
-
-        self.item_skus = [product[0] for product in self.products if product[5] == 1]
-        self.item_prices = {product[0]: product[1] for product in self.products if product[5] == 1}
-        self.item_popularities = [product[6] for product in self.products if product[5] == 1]
-        self.user_ids = [user[0] for user in self.users]
-        self.user_popularities = [user[7] for user in self.users]
-        self.num_orders = num_orders
-        self.max_num_items = max_num_items
-        self.start_date = start_date if isinstance(start_date, datetime) else datetime.strptime(start_date, '%Y-%m-%d')
-        self.end_date = end_date if isinstance(end_date, datetime) else datetime.strptime(end_date, '%Y-%m-%d')
-        self.order_dates = self._get_random_dates()
+        item_skus = [item_sku for item_sku in items]
+        item_popularities = [details['item_popularity'] for item_sku, details in items.items()]
         last_order_id = self._get_last_order_id()
 
-        self.orders = []
+        orders = []
 
-        for i in range(self.num_orders):
+        for i in range(num_orders):
 
-            items_in_order = self._get_num_items()
+            items_in_order = self._get_random_num_items(max_num_items)
             order_id = (last_order_id + 1) + i
-            random_user_id = random.choices(self.user_ids, self.user_popularities)[0]
-            date_created = self.order_dates[i].date().strftime('%Y-%m-%d')
-            date_updated = date_created
+            user_id = user_ids[i]
+            date_created = date_updated = datetime.now().strftime('%Y-%m-%d')
             
             order_lines = {}
 
             for j in range(items_in_order):
 
-                random_product = random.choices(self.item_skus, self.item_popularities)[0]
+                random_product = random.choices(item_skus, item_popularities)[0]
 
                 if random_product in order_lines:
                     order_lines[random_product] += 1
@@ -170,12 +94,12 @@ class Orders:
 
             for item_sku, qty in order_lines.items():
 
-                order = (order_id, random_user_id, item_sku, qty, self.item_prices[item_sku], date_created, date_updated)
-                self.orders.append(order)
-            
-        # self._add_to_db(self.orders)
-
-
+                price = items[item_sku]['item_price']
+                order_line = (order_id, user_id, item_sku, qty, price, date_created, date_updated)
+                orders.append(order_line)
+        
+        return orders
+                
     def get_count_orders(self) -> int:
 
         with DatabaseConnection(self.db_path) as db:
@@ -247,15 +171,6 @@ class Orders:
             if random.random() < 0.02:
                 messy_orders.append(messy_order)
 
-            # Change string case
-            # if random.random() < 0.2:
-            #         idx = random.randint(0, len(order) - 4)
-            #         if type(messy_order[idx]) is str:
-            #             if random.random() < 0.5:
-            #                 messy_order[idx] = messy_order[idx].lower()
-            #             else:
-            #                 messy_order[idx] = messy_order[idx].upper()
-            
             messy_orders.append(messy_order)             
         
         return messy_orders
@@ -299,43 +214,10 @@ class Orders:
     
             for row in export_data:
                 writer.writerow(row)
-
-    def _get_random_dates(self) -> list[datetime]:
-        
-        date_range = (self.end_date.date() - self.start_date.date()).days
-        order_dates = []
-        current_date = self.start_date
-
-        if date_range > 0:
-            base_orders_per_day = self.num_orders // date_range
-            orders_per_day = [base_orders_per_day] * date_range
-            orders_per_day = [x + random.randint(-x // 2, x // 2) for x in orders_per_day]
-            difference = self.num_orders - sum(orders_per_day)
-        
-            for _ in range(abs(difference)):
-
-                idx = random.randint(0, len(orders_per_day) - 1)
-                orders_per_day[idx] += 1 if difference > 0 else -1
-
-            for day in orders_per_day:
-
-                for i in range(day):
     
-                    order_dates.append(current_date)
-                    
-                current_date += timedelta(days=1)
-                
-        elif date_range == 0:
-            order_dates = [current_date] * self.num_orders
+    def _get_random_num_items(self, max_num_items) -> int:
 
-        else: 
-            raise ValueError('Start date for orders cannot be in the future.') 
-
-        return order_dates
-    
-    def _get_num_items(self) -> int:
-
-        max_num_items_list = list(range(1, self.max_num_items + 1))
+        max_num_items_list = list(range(1, max_num_items + 1))
         scaling = 0.6
         inv_exp_list = [1 / math.exp(x * scaling) for x in max_num_items_list]
         total = sum(inv_exp_list)
@@ -369,12 +251,26 @@ class Orders:
         return last_order_id
     
     def _validate_create_args(
-            self, 
+            self,
+            users: Users,
+            products: Products,
             num_orders: int, 
-            max_num_items: int, 
-            start_date: str | datetime, 
-            end_date: str | datetime
+            max_num_items: int
     ) -> None:
+
+        if not isinstance(users, Users):
+            raise TypeError(
+                'ERROR in Orders.create(). '
+                'Expected an instance of Users for users argument. '
+                f'Received {type(users).__name__}.'
+                )
+
+        if not isinstance(products, Products):
+            raise TypeError(
+                'ERROR in Orders.create(). '
+                'Expected an instance of Products for products argument. '
+                f'Received {type(products).__name__}.'
+                )
 
         if not (isinstance(num_orders, int) and num_orders > 0) or isinstance(num_orders, bool):
             raise ValueError(
@@ -390,15 +286,3 @@ class Orders:
                 f'Received value "{max_num_items}" of type: {type(max_num_items).__name__}.'
                 )
         
-        try:
-            if not isinstance(start_date, datetime):
-                datetime.fromisoformat(start_date)
-
-            if not isinstance(end_date, datetime):
-                datetime.fromisoformat(end_date)
-
-        except ValueError:
-            raise ValueError(
-                'ERROR in Orders.create(). '
-                'Expected a datetime object or valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
-            )

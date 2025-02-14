@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from database.DatabaseConnection import DatabaseConnection
 from ecommerce.Products import Products
 from ecommerce.Users import Users
 from ecommerce.Orders import Orders
@@ -34,12 +33,10 @@ class Ecommerce:
         self, 
         locales, 
         num_orders: int,
-        max_num_items: int,
-        start_date: str | datetime = datetime.now(),
-        end_date: str | datetime = datetime.now()
+        max_num_items: int
     ) -> None:  
 
-        self.orders.new_create(self.users, locales, self.products, num_orders, max_num_items, start_date, end_date)
+        self.orders.create(self.users, locales, self.products, num_orders, max_num_items)
           
 
     def to_csv(

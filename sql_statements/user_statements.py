@@ -5,9 +5,7 @@ create_user_table = '''
                 user_address TEXT,
                 user_country TEXT,
                 user_email TEXT,
-                date_created DATETIME,
-                date_updated DATETIME,
-                user_popularity REAL);
+                date_created DATETIME);
         '''
 
 drop_user_table = '''
@@ -21,23 +19,9 @@ add_users_to_db = '''
                 user_address,
                 user_country,
                 user_email,
-                date_created,
-                date_updated,
-                user_popularity
+                date_created
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        '''
-
-update_users = '''
-            UPDATE Users 
-            SET 
-                user_name = ?,
-                user_address = ?,
-                user_country = ?,
-                user_email = ?,
-                date_updated = ?
-            WHERE 
-                user_id = ?
+            VALUES (?, ?, ?, ?, ?, ?)
         '''
 
 get_count_users = '''
@@ -56,41 +40,11 @@ get_users_by_date_range = '''
             WHERE DATE(date_created) BETWEEN ? AND ?;                   
         '''
 
-get_last_added = '''
-            SELECT *
-            FROM Users
-            ORDER BY date_created DESC
-            LIMIT 1
-        '''
-
-get_last_updated = '''
-            SELECT *
-            FROM Users
-            ORDER BY date_updated DESC
-            LIMIT 1
-        '''
-
 get_last_user_id = '''
             SELECT user_id
             FROM Users
             ORDER BY rowid DESC
             LIMIT 1       
-        '''
-
-get_upper_limit = '''
-            SELECT MAX(user_popularity) 
-            FROM Users
-        '''
-
-get_popularity_scores = '''
-            SELECT user_popularity 
-            FROM Users
-        '''
-
-set_popularity_scores = '''
-            UPDATE Users 
-            SET user_popularity = ? 
-            WHERE user_popularity = ?
         '''
 
 def get_users_by_id(user_id):

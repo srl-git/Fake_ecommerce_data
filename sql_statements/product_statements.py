@@ -74,20 +74,6 @@ get_products_by_date_range = '''
             WHERE DATE(date_created) BETWEEN ? AND ?;                   
         '''
 
-get_last_added = '''
-            SELECT *
-            FROM Products
-            ORDER BY rowid DESC
-            LIMIT 1
-        '''
-
-get_last_updated = '''
-            SELECT *
-            FROM Products
-            ORDER BY date_updated DESC
-            LIMIT 1
-        '''
-
 def get_products_by_sku(sku):
 
     placeholder = ', '.join(['?'] * len(sku))

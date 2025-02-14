@@ -41,10 +41,10 @@ class Products:
             creation_date = datetime.strptime(creation_date, '%Y-%m-%d')
 
         release_date = (creation_date + timedelta(weeks=6)).strftime('%Y-%m-%d')
-        date_created = creation_date.strftime('%Y-%m-%d')
-        date_updated = date_created
+        date_created = date_updated = creation_date.strftime('%Y-%m-%d')
         popularity_upper_limit = self._get_upper_limit()
         index = self._get_sku_index(label_prefix)
+        
         products = []
         
         for i in range(num_items):
@@ -156,22 +156,6 @@ class Products:
             products_by_date_range = db.cursor.fetchall()
             
         return products_by_date_range
-
-    def get_last_added(self) -> tuple:
-
-        with DatabaseConnection(self.db_path) as db:
-            db.cursor.execute(sql.product_statements.get_last_added)
-            last_added = db.cursor.fetchone()
-
-        return last_added
-
-    def get_last_updated(self) -> tuple:
-
-        with DatabaseConnection(self.db_path) as db:
-            db.cursor.execute(sql.product_statements.get_last_updated)
-            last_updated = db.cursor.fetchone()
-
-        return last_updated
     
     def to_csv(
         self,
