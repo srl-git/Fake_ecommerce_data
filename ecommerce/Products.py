@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
 import random
 import csv
+import io
 
 from database.DatabaseConnection import DatabaseConnection
+from google_cloud import upload_to_bucket
 import sql_statements as sql
-
 
 class Products:
     
@@ -160,7 +161,9 @@ class Products:
     def to_csv(
         self,
         start_date: str | datetime | None = None,
-        end_date: str | datetime | None = None
+        end_date: str | datetime | None = None,
+        local_file: bool = True,
+        cloud_storage_file: bool = False
     ) -> None:
 
         if start_date or end_date:
@@ -186,6 +189,13 @@ class Products:
             date_today = datetime.today().strftime('%Y-%m-%d')
             file_path = f'Product_report_{date_today}.csv'
 
+        if local_file:
+            self._save_to_file(export_data, file_path)
+        if cloud_storage_file:
+            self._save_to_cloud_storage(export_data, file_path)
+    
+    def _save_to_file(self, export_data: list[tuple], file_path: str):
+
         with open(file_path, mode='w', newline='') as file:
             
             writer = csv.writer(file)
@@ -193,6 +203,20 @@ class Products:
             
             for row in export_data:
                 writer.writerow(row)
+                
+    def _save_to_cloud_storage(self, export_data: list[tuple], file_path: str):
+
+        csv_buffer = io.StringIO()
+        writer = csv.writer(csv_buffer)
+        writer.writerow(['Product SKU', 'Price', 'Release Date', 'Date Created', 'Date Updated', 'Active'])
+
+        for row in export_data:
+            writer.writerow(row)
+        
+        upload_data = csv_buffer.getvalue()
+
+        upload_to_bucket(f'product_reports/{file_path}', upload_data, 'srl_ecommerce')
+        
 
     def _initialise_db_table(self) -> None:
         

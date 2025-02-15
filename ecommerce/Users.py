@@ -2,11 +2,13 @@ from datetime import datetime
 from unidecode import unidecode
 import random
 import csv
+import io
 
 from faker import Faker
 from faker.config import AVAILABLE_LOCALES
 
 from database.DatabaseConnection import DatabaseConnection
+from google_cloud import upload_to_bucket
 import sql_statements as sql
 
 class Users:
@@ -31,10 +33,10 @@ class Users:
         self,
         num_users: int,
         locales: list[str]
-    ) -> list[tuple] | None: 
+    ) -> list[tuple]: 
 
         if num_users == 0:
-            return
+            return []
         
         self._validate_create_args(num_users, locales)
 
@@ -136,7 +138,9 @@ class Users:
     def to_csv(
         self,
         start_date: str | datetime | None = None,
-        end_date: str | datetime | None = None
+        end_date: str | datetime | None = None,
+        local_file: bool = True,
+        cloud_storage_file: bool = False
     ) -> None:
 
         if start_date or end_date:
@@ -162,13 +166,33 @@ class Users:
             date_today = datetime.today().date().strftime('%Y-%m-%d')
             file_path = f'User_report_{date_today}.csv'
 
+        if local_file:
+            self._save_to_file(export_data, file_path)
+        if cloud_storage_file:
+            self._save_to_cloud_storage(export_data, file_path)
+    
+    def _save_to_file(self, export_data: list[tuple], file_path: str):
+
         with open(file_path, mode='w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(['user_id', 'user_name', 'user_address', 'user_country', 'user_email', 'date_created', 'date_updated'])
             
             for row in export_data:
-                writer.writerow(row)        
-   
+                writer.writerow(row)
+    
+    def _save_to_cloud_storage(self, export_data: list[tuple], file_path: str):
+
+        csv_buffer = io.StringIO()
+        writer = csv.writer(csv_buffer)
+        writer.writerow(['user_id', 'user_name', 'user_address', 'user_country', 'user_email', 'date_created', 'date_updated'])
+
+        for row in export_data:
+            writer.writerow(row)
+        
+        upload_data = csv_buffer.getvalue()
+
+        upload_to_bucket(f'user_reports/{file_path}', upload_data, 'srl_ecommerce')
+
     def _create_email(self, name: str) -> str:
         email_prefix = unidecode(name.lower().replace(' ','').replace('.',''))
         email = f'{email_prefix}@example.com'

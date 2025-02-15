@@ -2,6 +2,7 @@
 *.db
 TODO
 README.md
+google_cloud/ServiceKey_GoogleCloudStorage.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

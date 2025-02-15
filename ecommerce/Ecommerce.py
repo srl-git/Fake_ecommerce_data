@@ -31,20 +31,22 @@ class Ecommerce:
     
     def create_orders_and_users(
         self, 
-        locales, 
+        locales: list[str], 
         num_orders: int,
         max_num_items: int
     ) -> None:  
 
         self.orders.create(self.users, locales, self.products, num_orders, max_num_items)
-          
 
     def to_csv(
         self,
         start_date: str | datetime | None = None,
-        end_date: str | datetime | None = None
+        end_date: str | datetime | None = None,
+        messy_data: bool = False,
+        local_file: bool = True,
+        cloud_storage_file: bool = False
     ) -> None:
-
-        self.products.to_csv(start_date, end_date)
-        self.users.to_csv(start_date, end_date)
-        self.orders.to_csv(start_date, end_date)
+                
+        self.products.to_csv(start_date, end_date, local_file, cloud_storage_file)
+        self.users.to_csv(start_date, end_date, local_file, cloud_storage_file)
+        self.orders.to_csv(start_date, end_date, messy_data, local_file, cloud_storage_file)

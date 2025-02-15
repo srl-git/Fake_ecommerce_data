@@ -2,10 +2,12 @@ from datetime import datetime, timedelta
 import random
 import math
 import csv
+import io
 
 from database.DatabaseConnection import DatabaseConnection
 from ecommerce.Products import Products
 from ecommerce.Users import Users
+from google_cloud import upload_to_bucket
 import sql_statements as sql
 
 class Orders:
@@ -179,7 +181,9 @@ class Orders:
         self,
         start_date: str | datetime | None = None,
         end_date: str | datetime | None = None,
-        messy_data: bool = False
+        messy_data: bool = False,
+        local_file: bool = True,
+        cloud_storage_file: bool = False
     ) -> None:
               
         if start_date or end_date:
@@ -208,6 +212,13 @@ class Orders:
         if messy_data:
             export_data = self._introduce_messy_data(export_data)
 
+        if local_file:
+            self._save_to_file(export_data, file_path)
+        if cloud_storage_file:
+            self._save_to_cloud_storage(export_data, file_path)
+    
+    def _save_to_file(self, export_data: list[tuple], file_path: str):
+
         with open(file_path, mode='w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(['order_line_id', 'order_id', 'user_id', 'item_sku', 'qty', 'item_price', 'date_created', 'date_updated'])
@@ -215,6 +226,19 @@ class Orders:
             for row in export_data:
                 writer.writerow(row)
     
+    def _save_to_cloud_storage(self, export_data: list[tuple], file_path: str):
+
+        csv_buffer = io.StringIO()
+        writer = csv.writer(csv_buffer)
+        writer.writerow(['order_line_id', 'order_id', 'user_id', 'item_sku', 'qty', 'item_price', 'date_created', 'date_updated'])
+
+        for row in export_data:
+            writer.writerow(row)
+        
+        upload_data = csv_buffer.getvalue()
+
+        upload_to_bucket(f'order_reports/{file_path}', upload_data, 'srl_ecommerce')
+            
     def _get_random_num_items(self, max_num_items) -> int:
 
         max_num_items_list = list(range(1, max_num_items + 1))
