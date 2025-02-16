@@ -166,6 +166,8 @@ class Users:
             date_today = datetime.today().date().strftime('%Y-%m-%d')
             file_path = f'User_report_{date_today}.csv'
 
+        if len(export_data) == 0:
+            return
         if local_file:
             self._save_to_file(export_data, file_path)
         if cloud_storage_file:
@@ -175,7 +177,7 @@ class Users:
 
         with open(file_path, mode='w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(['user_id', 'user_name', 'user_address', 'user_country', 'user_email', 'date_created', 'date_updated'])
+            writer.writerow(['user_id', 'user_name', 'user_address', 'user_country', 'user_email', 'date_created'])
             
             for row in export_data:
                 writer.writerow(row)
@@ -184,7 +186,7 @@ class Users:
 
         csv_buffer = io.StringIO()
         writer = csv.writer(csv_buffer)
-        writer.writerow(['user_id', 'user_name', 'user_address', 'user_country', 'user_email', 'date_created', 'date_updated'])
+        writer.writerow(['user_id', 'user_name', 'user_address', 'user_country', 'user_email', 'date_created'])
 
         for row in export_data:
             writer.writerow(row)

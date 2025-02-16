@@ -7,7 +7,6 @@ create_order_table = '''
                 qty INTEGER,
                 item_price REAL,
                 date_created DATETIME,
-                date_updated DATETIME,
                 FOREIGN KEY(user_id)
                     REFERENCES Users (user_id));
         '''
@@ -23,10 +22,9 @@ add_orders_to_db = '''
                 item_sku,
                 qty,
                 item_price,
-                date_created,
-                date_updated
+                date_created
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
         '''
 
 get_count_orders = '''
@@ -48,6 +46,6 @@ get_orders_by_date_range =  '''
 get_last_order_id = '''
             SELECT order_id
             FROM Orders
-            ORDER BY rowid DESC
+            ORDER BY order_line_id DESC
             LIMIT 1
         '''

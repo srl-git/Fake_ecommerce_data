@@ -58,7 +58,7 @@ class Orders:
     
     def _get_user_ids(self, users: Users, locales: list[str], num_orders: int) -> list[int]:
 
-        ratio_previous_users = random.uniform(0.0, 0.5)
+        ratio_previous_users = random.uniform(0.0, 0.3)
         num_previous_users = round(num_orders * ratio_previous_users)
         previous_users = users.get_random_users(num_previous_users)
         num_new_users = num_orders - len(previous_users)
@@ -81,7 +81,7 @@ class Orders:
             items_in_order = self._get_random_num_items(max_num_items)
             order_id = (last_order_id + 1) + i
             user_id = user_ids[i]
-            date_created = date_updated = datetime.now().strftime('%Y-%m-%d')
+            date_created = datetime.now().strftime('%Y-%m-%d')
             
             order_lines = {}
 
@@ -97,7 +97,7 @@ class Orders:
             for item_sku, qty in order_lines.items():
 
                 price = items[item_sku]['item_price']
-                order_line = (order_id, user_id, item_sku, qty, price, date_created, date_updated)
+                order_line = (order_id, user_id, item_sku, qty, price, date_created)
                 orders.append(order_line)
         
         return orders
@@ -211,7 +211,8 @@ class Orders:
 
         if messy_data:
             export_data = self._introduce_messy_data(export_data)
-
+        if len(export_data) == 0:
+            return
         if local_file:
             self._save_to_file(export_data, file_path)
         if cloud_storage_file:
@@ -221,7 +222,7 @@ class Orders:
 
         with open(file_path, mode='w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(['order_line_id', 'order_id', 'user_id', 'item_sku', 'qty', 'item_price', 'date_created', 'date_updated'])
+            writer.writerow(['order_line_id', 'order_id', 'user_id', 'item_sku', 'qty', 'item_price', 'date_created'])
     
             for row in export_data:
                 writer.writerow(row)
@@ -230,7 +231,7 @@ class Orders:
 
         csv_buffer = io.StringIO()
         writer = csv.writer(csv_buffer)
-        writer.writerow(['order_line_id', 'order_id', 'user_id', 'item_sku', 'qty', 'item_price', 'date_created', 'date_updated'])
+        writer.writerow(['order_line_id', 'order_id', 'user_id', 'item_sku', 'qty', 'item_price', 'date_created'])
 
         for row in export_data:
             writer.writerow(row)

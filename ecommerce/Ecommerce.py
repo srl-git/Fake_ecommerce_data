@@ -12,7 +12,6 @@ class Ecommerce:
             raise ValueError('The path to the database file must be a non empty string with a .db file extension')
         
         self.db_path = db_path
-
         self.products = Products(self.db_path)
         self.users = Users(self.db_path)
         self.orders = Orders(self.db_path)

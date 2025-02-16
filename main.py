@@ -1,19 +1,26 @@
-from datetime import datetime, timedelta
-from ecommerce import Ecommerce, Products, Users, Orders
+from ecommerce import Ecommerce
 import random
-import cProfile
+from datetime import datetime
 
 DB_PATH = 'database/ecommerce_data.db'
 
-LABEL_PREFIX = 'LCR'
+LABEL_PREFIXES = [
+    'LCR', 'SUMO',
+    'STDR', 'KALA', 
+    'GAS', 'PIL'
+]
 
-PRICING = [18.0, 19.0,
-           20.0, 21.0]
+PRICING = [
+    18.0, 19.0,
+    20.0, 21.0
+]
 
-LOCALES = ['en_GB', 'en_US', 'fr_FR',
-           'en_CA', 'de_DE', 'en_AU', 
-           'es_ES', 'fr_BE', 'it_IT', 
-           'ja_JP', 'nl_NL', 'pt_PT']
+LOCALES = [
+    'en_GB', 'en_US', 'fr_FR',
+    'en_CA', 'de_DE', 'en_AU', 
+    'es_ES', 'fr_BE', 'it_IT', 
+    'ja_JP', 'nl_NL', 'pt_PT'
+]
 
 MAX_ITEMS_PER_ORDER = 7
 
@@ -22,31 +29,35 @@ MESSY_DATA = False
 def main():
 
     ecommerce = Ecommerce(DB_PATH)
-    
-    # num_items = random.randint(1, 3)
 
-    ecommerce.products.create(
-                LABEL_PREFIX,
-                25,
-                PRICING
-            )
+    wednesday = datetime.now().isoweekday() == 3
 
-    num_orders = 10000
+    if wednesday:
+        ecommerce.products.create(
+                    label_prefix=random.choice(LABEL_PREFIXES),
+                    num_items=random.randint(1, 4),
+                    pricing=PRICING,
+                )
         
     ecommerce.create_orders_and_users(
-        LOCALES,
-        100,
-        MAX_ITEMS_PER_ORDER
+        locales=LOCALES,
+        num_orders=random.randint(3, 500),
+        max_num_items=MAX_ITEMS_PER_ORDER
     )
-            
-    # ecommerce.to_csv()
-    
+
+    ecommerce.to_csv(
+        start_date=datetime.now(),
+        local_file=True,
+        cloud_storage_file=False
+    )
+
+    print(ecommerce)
 
 if __name__ == '__main__':
-    main()
-#    cProfile.run('main()',sort='tottime')
-    # try:
+    try:
+        main()
+    except Exception as e:
+        print(e)
 
-    # except Exception as e:
-        
-    #     print(e)
+
+

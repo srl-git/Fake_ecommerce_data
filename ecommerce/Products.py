@@ -189,6 +189,8 @@ class Products:
             date_today = datetime.today().strftime('%Y-%m-%d')
             file_path = f'Product_report_{date_today}.csv'
 
+        if len(export_data) == 0:
+            return
         if local_file:
             self._save_to_file(export_data, file_path)
         if cloud_storage_file:
