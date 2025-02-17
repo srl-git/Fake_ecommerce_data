@@ -24,7 +24,7 @@ LOCALES = [
 
 def main():
 
-    ecommerce = Ecommerce(DB_PATH)
+    ecommerce = Ecommerce()
 
     wednesday = datetime.now().isoweekday() == 3
 
@@ -55,6 +55,3 @@ if __name__ == '__main__':
         main()
     except Exception as e:
         print(e)
-
-
-
