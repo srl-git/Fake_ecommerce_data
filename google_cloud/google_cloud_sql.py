@@ -41,9 +41,3 @@ class CloudSQLConnection:
                 self.cursor.close()
                 self.connection.close()
                 self.connector.close()
-
-
-with CloudSQLConnection() as db:
-    db.cursor.execute("SELECT * FROM test ORDER BY RANDOM() LIMIT 5;")
-    result = db.cursor.fetchall()
-    print(result)

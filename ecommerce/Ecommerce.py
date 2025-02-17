@@ -6,19 +6,15 @@ from ecommerce.Orders import Orders
 
 class Ecommerce:
     
-    def __init__(self, db_path: str) -> None:
+    def __init__(self) -> None:
         
-        if not (isinstance(db_path, str) and db_path.endswith('.db')):
-            raise ValueError('The path to the database file must be a non empty string with a .db file extension')
-        
-        self.db_path = db_path
-        self.products = Products(self.db_path)
-        self.users = Users(self.db_path)
-        self.orders = Orders(self.db_path)
+        self.products = Products()
+        self.users = Users()
+        self.orders = Orders()
 
     def __repr__(self) -> str:
         
-        return f'Ecommerce({self.db_path})'
+        return f'Ecommerce()'
 
     def __str__(self) -> str:
         
@@ -36,6 +32,12 @@ class Ecommerce:
     ) -> None:  
 
         self.orders.create(self.users, locales, self.products, num_orders, max_num_items)
+
+    def drop_all_tables(self) -> None:
+
+        self.products._drop_db_table()
+        self.orders._drop_db_table()
+        self.users._drop_db_table()
 
     def to_csv(
         self,

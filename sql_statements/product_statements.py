@@ -1,38 +1,38 @@
 create_product_table = '''
             CREATE TABLE IF NOT EXISTS Products (
                 item_sku TEXT PRIMARY KEY,
-                item_price REAL,
-                release_date DATETIME,
-                date_created DATETIME,
-                date_updated DATETIME,
+                item_price DECIMAL(12,2),
+                release_date TIMESTAMP,
+                date_created TIMESTAMP,
+                date_updated TIMESTAMP,
                 active BOOLEAN,
-                item_popularity REAL);
+                item_popularity DOUBLE PRECISION);
         '''
 
 drop_product_table = '''
-            DROP TABLE Products;
+            DROP TABLE IF EXISTS Products;
         '''
 
 get_sku_index = '''
             SELECT COUNT(item_sku) 
             FROM Products 
-            WHERE item_sku LIKE ?
+            WHERE item_sku LIKE %s;
         '''
 
 get_upper_limit = '''
             SELECT MAX(item_popularity) 
-            FROM Products
+            FROM Products;
         '''
 
 get_popularity_scores = '''
             SELECT item_popularity 
-            FROM Products
+            FROM Products;
         '''
 
 set_popularity_scores = '''
             UPDATE Products 
-            SET item_popularity = ? 
-            WHERE item_popularity = ?
+            SET item_popularity = %s 
+            WHERE item_popularity = %s;
         '''
 
 add_products_to_db = '''
@@ -45,38 +45,38 @@ add_products_to_db = '''
                 active, 
                 item_popularity
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s);
         '''
 
 update_products = '''
             UPDATE Products 
             SET 
-                item_price = ?,
-                date_updated = ?,
-                active = ? 
+                item_price = %s,
+                date_updated = %s,
+                active = %s 
             WHERE 
-                item_sku = ?
+                item_sku = %s;
         '''
 
 get_count_products = '''
             SELECT COUNT(*) 
-            FROM Products
+            FROM Products;
         '''
 
 get_products = '''
             SELECT * 
-            FROM Products
+            FROM Products;
         '''
 
 get_products_by_date_range = '''
             SELECT *
             FROM Products
-            WHERE DATE(date_created) BETWEEN ? AND ?;                   
+            WHERE date_created::DATE BETWEEN %s AND %s;                   
         '''
 
 def get_products_by_sku(sku):
 
-    placeholder = ', '.join(['?'] * len(sku))
+    placeholder = ', '.join(['%s'] * len(sku))
     statement = f'''
             SELECT * 
             FROM Products 

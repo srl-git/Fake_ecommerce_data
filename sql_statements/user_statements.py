@@ -5,11 +5,11 @@ create_user_table = '''
                 user_address TEXT,
                 user_country TEXT,
                 user_email TEXT,
-                date_created DATETIME);
+                date_created TIMESTAMP);
         '''
 
 drop_user_table = '''
-            DROP TABLE Users;
+            DROP TABLE IF EXISTS Users;
         '''
 
 add_users_to_db = '''
@@ -21,42 +21,42 @@ add_users_to_db = '''
                 user_email,
                 date_created
             ) 
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s);
         '''
 
 get_count_users = '''
             SELECT COUNT(*) 
-            FROM Users
+            FROM Users;
         '''
 
 get_users = '''
             SELECT * 
-            FROM Users
+            FROM Users;
         '''
 
 get_users_by_date_range = '''
             SELECT *
             FROM Users
-            WHERE DATE(date_created) BETWEEN ? AND ?;                   
+            WHERE date_created::DATE BETWEEN %s AND %s;                   
         '''
 
 get_random_users = '''
             SELECT *
             FROM Users
             ORDER BY RANDOM()
-            LIMIT ?
+            LIMIT %s;
         '''
 
 get_last_user_id = '''
             SELECT user_id
             FROM Users
-            ORDER BY rowid DESC
-            LIMIT 1       
+            ORDER BY user_id DESC
+            LIMIT 1;    
         '''
 
 def get_users_by_id(user_id):
 
-    placeholder = ', '.join(['?'] * len(user_id))
+    placeholder = ', '.join(['%s'] * len(user_id))
     statement = f'''
             SELECT * 
             FROM Users 

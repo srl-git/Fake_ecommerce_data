@@ -4,22 +4,20 @@ import math
 import csv
 import io
 
-from database.DatabaseConnection import DatabaseConnection
+from google_cloud import CloudSQLConnection, upload_to_bucket
 from ecommerce.Products import Products
 from ecommerce.Users import Users
-from google_cloud import upload_to_bucket
 import sql_statements as sql
 
 class Orders:
     
-    def __init__(self, db_path: str) -> None:
+    def __init__(self) -> None:
         
-        self.db_path = db_path
         self._initialise_db_table()
 
     def __repr__(self) -> str:
         
-        return f'Orders({self.db_path})'
+        return f'Orders()'
 
     def __str__(self) -> str:
         
@@ -104,7 +102,7 @@ class Orders:
                 
     def get_count_orders(self) -> int:
 
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.order_statements.get_count_orders)
             count_orders = db.cursor.fetchone()[0]
         
@@ -112,7 +110,7 @@ class Orders:
     
     def get_orders(self) -> list[tuple]:
 
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.order_statements.get_orders)
             all_orders = db.cursor.fetchall()
 
@@ -141,7 +139,7 @@ class Orders:
                 'Expected a datetime object or a valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
             )
         
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.order_statements.get_orders_by_date_range,(start_date, end_date))
             orders_by_date_range = db.cursor.fetchall()
             
@@ -158,15 +156,13 @@ class Orders:
             # Change date strings
             if random.random() < 0.05:  
                 if random.random() < 0.5:
-                    messy_order[6] = datetime.strptime(messy_order[6],'%Y-%m-%d').strftime('%d/%m/%Y')
-                    messy_order[7] = datetime.strptime(messy_order[7],'%Y-%m-%d').strftime('%d/%m/%Y')
+                    messy_order[6] = messy_order[6].strftime('%d/%m/%Y')
                 else:
-                    messy_order[6] = datetime.strptime(messy_order[6], '%Y-%m-%d').strftime('%d-%m-%Y')
-                    messy_order[7] = datetime.strptime(messy_order[7], '%Y-%m-%d').strftime('%d-%m-%Y')
+                    messy_order[6] = messy_order[6].strftime('%d-%m-%Y')
 
             # Introduce blank values
             if random.random() < 0.1:
-                    idx = random.randint(5, 7)
+                    idx = random.randint(5, 6)
                     messy_order[idx] = None
 
             # Duplicate order rows
@@ -253,22 +249,22 @@ class Orders:
     
     def _initialise_db_table(self) -> None:
 
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.order_statements.create_order_table)
     
     def _drop_db_table(self) -> None:
     
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.order_statements.drop_order_table) 
 
     def _add_to_db(self, orders: list[tuple]) -> None:
         
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.executemany(sql.order_statements.add_orders_to_db, orders)
 
     def _get_last_order_id(self) -> int:
 
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.order_statements.get_last_order_id)
             result = db.cursor.fetchone()
             last_order_id = result[0] if result is not None else 0

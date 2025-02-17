@@ -7,23 +7,18 @@ import io
 from faker import Faker
 from faker.config import AVAILABLE_LOCALES
 
-from database.DatabaseConnection import DatabaseConnection
-from google_cloud import upload_to_bucket
+from google_cloud import CloudSQLConnection, upload_to_bucket
 import sql_statements as sql
 
 class Users:
 
-    def __init__(self, db_path) -> None:
+    def __init__(self) -> None:
         
-        if not (isinstance(db_path, str) and db_path.endswith('.db')):
-            raise ValueError('The path to the database file must be a non empty string with a .db file extension')
-        
-        self.db_path = db_path
         self._initialise_db_table()
     
     def __repr__(self) -> str:
         
-        return f'Users({self.db_path})'
+        return f'Users()'
 
     def __str__(self) -> str:
     
@@ -68,7 +63,7 @@ class Users:
 
     def get_count_users(self) -> int:
 
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.user_statements.get_count_users)
             count_users = db.cursor.fetchone()[0]
             
@@ -79,7 +74,7 @@ class Users:
         user_id: int | list[int] | tuple[int] | None = None
     ) -> list[tuple]:
         
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             if user_id:
                 if isinstance(user_id, int):
                     user_id = (user_id, )
@@ -115,7 +110,7 @@ class Users:
                 'Expected a datetime object or a valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
             )
         
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.user_statements.get_users_by_date_range,(start_date, end_date))
             users_by_date_range = db.cursor.fetchall()
             
@@ -123,12 +118,12 @@ class Users:
     
     def _get_random_users(self, num_previous_users: int) -> list[tuple]:
 
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.user_statements.get_random_users,(num_previous_users,))
 
             random_users = db.cursor.fetchall()
 
-        return random_users
+        return list(random_users) if isinstance(random_users, tuple) else random_users
         
     def to_csv(
         self,
@@ -198,22 +193,22 @@ class Users:
     
     def _initialise_db_table(self) -> None:
 
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.user_statements.create_user_table)
 
     def _drop_db_table(self) -> None:
         
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.user_statements.drop_user_table)
 
     def _add_to_db(self, users: list[tuple]) -> None:
 
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.executemany(sql.user_statements.add_users_to_db, users)
 
     def _get_last_user_id(self) -> int:
 
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.user_statements.get_last_user_id)
             result = db.cursor.fetchone()
             last_user_id = result[0] if result is not None else 0

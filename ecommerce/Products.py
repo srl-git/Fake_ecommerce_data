@@ -3,23 +3,18 @@ import random
 import csv
 import io
 
-from database.DatabaseConnection import DatabaseConnection
-from google_cloud import upload_to_bucket
+from google_cloud import CloudSQLConnection, upload_to_bucket
 import sql_statements as sql
 
 class Products:
     
-    def __init__(self, db_path: str) -> None:
+    def __init__(self) -> None:
         
-        if not (isinstance(db_path, str) and db_path.endswith('.db')):
-            raise ValueError('The path to the database file must be a non empty string with a .db file extension')
-        
-        self.db_path = db_path
         self._initialise_db_table()
 
     def __repr__(self) -> str:
         
-        return f'Products({self.db_path})'
+        return f'Products()'
 
     def __str__(self) -> str:
        
@@ -94,12 +89,12 @@ class Products:
                 is_active_updated = is_active[index] if is_active is not None else product[5]
                 update_data.append((price_updated, date_updated, is_active_updated, sku_to_update))
 
-            with DatabaseConnection(self.db_path) as db:
+            with CloudSQLConnection() as db:
                 db.cursor.executemany(sql.product_statements.update_products,(update_data))  
 
     def get_count_products(self) -> int:
         
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.product_statements.get_count_products)
             count_products = db.cursor.fetchone()[0]
             
@@ -110,7 +105,7 @@ class Products:
         item_sku: str | list[str] | tuple[str] | None = None
     ) -> list[tuple]:
         
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
 
             if item_sku:
                 if not (isinstance(item_sku, (str, list, tuple)) and all(isinstance(s, str) for s in item_sku)):
@@ -152,7 +147,7 @@ class Products:
                 'Expected a datetime object or a valid date string in format YYYY-MM-DD for start_date and end_date arguments.'
             )
 
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.product_statements.get_products_by_date_range,(start_date, end_date))
             products_by_date_range = db.cursor.fetchall()
             
@@ -222,12 +217,12 @@ class Products:
 
     def _initialise_db_table(self) -> None:
         
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.product_statements.create_product_table)
 
     def _drop_db_table(self) -> None:
 
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.product_statements.drop_product_table)
 
     def _validate_create_args(
@@ -363,7 +358,7 @@ class Products:
 
     def _get_sku_index(self, label_prefix: str) -> int:
         
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.product_statements.get_sku_index, (f'{label_prefix}%',))
             sku_index = db.cursor.fetchone()[0]
 
@@ -371,7 +366,7 @@ class Products:
 
     def _get_upper_limit(self) -> float:
 
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.product_statements.get_upper_limit)
             max_popularity_score = db.cursor.fetchone()[0]
 
@@ -381,7 +376,7 @@ class Products:
 
     def _set_popularity_scores(self) -> None:
  
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.execute(sql.product_statements.get_popularity_scores)
             old_popularity_scores = tuple(score[0] for score in db.cursor.fetchall())
 
@@ -389,7 +384,7 @@ class Products:
         new_popularity_scores = tuple(score * normalizer for score in old_popularity_scores)
         update_scores = zip(new_popularity_scores, old_popularity_scores)
 
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.executemany(sql.product_statements.set_popularity_scores, (update_scores))
 
     def _add_to_db(
@@ -397,7 +392,7 @@ class Products:
         products: list[tuple]
     ) -> None:
             
-        with DatabaseConnection(self.db_path) as db:
+        with CloudSQLConnection() as db:
             db.cursor.executemany(sql.product_statements.add_products_to_db, products)
         
         self._set_popularity_scores()
