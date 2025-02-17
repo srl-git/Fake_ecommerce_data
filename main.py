@@ -1,6 +1,7 @@
 from ecommerce import Ecommerce
 import random
 from datetime import datetime
+from google_cloud import google_cloud_sql
 
 DB_PATH = 'database/ecommerce_data.db'
 
@@ -22,10 +23,6 @@ LOCALES = [
     'ja_JP', 'nl_NL', 'pt_PT'
 ]
 
-MAX_ITEMS_PER_ORDER = 7
-
-MESSY_DATA = False
-
 def main():
 
     ecommerce = Ecommerce(DB_PATH)
@@ -42,13 +39,14 @@ def main():
     ecommerce.create_orders_and_users(
         locales=LOCALES,
         num_orders=random.randint(3, 500),
-        max_num_items=MAX_ITEMS_PER_ORDER
+        max_num_items=7
     )
 
     ecommerce.to_csv(
         start_date=datetime.now(),
-        local_file=True,
-        cloud_storage_file=False
+        messy_data=True,
+        local_file=False,
+        cloud_storage_file=True
     )
 
     print(ecommerce)

@@ -1,8 +1,7 @@
 import os
 from google.cloud import storage
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'google_cloud/ServiceKey_GoogleCloudStorage.json'
-
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'google_cloud/ServiceKey_GoogleCloud.json'
 
 def upload_to_bucket(blob_name, data, bucket_name, content_type = 'text/csv'):
     
