@@ -40,6 +40,13 @@ get_users_by_date_range = '''
             WHERE DATE(date_created) BETWEEN ? AND ?;                   
         '''
 
+get_random_users = '''
+            SELECT *
+            FROM Users
+            ORDER BY RANDOM()
+            LIMIT ?
+        '''
+
 get_last_user_id = '''
             SELECT user_id
             FROM Users

@@ -60,7 +60,7 @@ class Orders:
 
         ratio_previous_users = random.uniform(0.0, 0.3)
         num_previous_users = round(num_orders * ratio_previous_users)
-        previous_users = users.get_random_users(num_previous_users)
+        previous_users = users._get_random_users(num_previous_users)
         num_new_users = num_orders - len(previous_users)
         new_users = users.create(num_new_users, locales)
         all_users = previous_users + new_users

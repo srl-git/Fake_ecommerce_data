@@ -44,6 +44,6 @@ class CloudSQLConnection:
 
 
 with CloudSQLConnection() as db:
-    db.cursor.execute('SELECT now();')
+    db.cursor.execute("SELECT * FROM test ORDER BY RANDOM() LIMIT 5;")
     result = db.cursor.fetchall()
     print(result)

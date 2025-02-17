@@ -1,7 +1,6 @@
 from ecommerce import Ecommerce
 import random
 from datetime import datetime
-from google_cloud import google_cloud_sql
 
 DB_PATH = 'database/ecommerce_data.db'
 

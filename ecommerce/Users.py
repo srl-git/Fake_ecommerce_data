@@ -121,15 +121,10 @@ class Users:
             
         return users_by_date_range
     
-    def get_random_users(self, num_previous_users: int) -> list[tuple]:
+    def _get_random_users(self, num_previous_users: int) -> list[tuple]:
 
         with DatabaseConnection(self.db_path) as db:
-            db.cursor.execute('''
-            SELECT *
-            FROM Users
-            ORDER BY RANDOM()
-            LIMIT ?
-        ''',(num_previous_users,))
+            db.cursor.execute(sql.user_statements.get_random_users,(num_previous_users,))
 
             random_users = db.cursor.fetchall()
 
