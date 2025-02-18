@@ -21,7 +21,7 @@ class Orders:
 
     def __str__(self) -> str:
         
-        return f'There are {self.get_count_orders()} orders in the database'
+        return f'There are {self.get_count_orders()} orders in the database.'
     
     def create(
         self, 
@@ -39,6 +39,8 @@ class Orders:
         orders = self._generate_order_lines(items, all_user_ids, num_orders, max_num_items)
         
         self._add_to_db(orders)
+
+        print(f'Adding {len(orders)} order line(s) to the database.')
 
     def _get_active_products(self, products: Products) -> dict:
 

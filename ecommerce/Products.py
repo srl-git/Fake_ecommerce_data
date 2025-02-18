@@ -18,7 +18,7 @@ class Products:
 
     def __str__(self) -> str:
        
-        return f'There are {self.get_count_products()} products in the database'
+        return f'There are {self.get_count_products()} products in the database.'
      
     def create(
         self, 
@@ -26,7 +26,7 @@ class Products:
         num_items: int, 
         pricing: list[float],
         creation_date: str | datetime = datetime.now()
-    ) -> None:
+    ) -> list[tuple] | None:
         
         if num_items == 0:
             return
@@ -53,6 +53,10 @@ class Products:
             products.append(product)
 
         self._add_to_db(products)
+
+        print(f'Adding {len(products)} product(s) to the database.')
+
+        return products
     
     def update(
         self,
@@ -91,6 +95,7 @@ class Products:
 
             with CloudSQLConnection() as db:
                 db.cursor.executemany(sql.product_statements.update_products,(update_data))  
+            print(f'Updating {len(update_data)} product(s) in the database.')
 
     def get_count_products(self) -> int:
         

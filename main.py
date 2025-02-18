@@ -2,8 +2,6 @@ from ecommerce import Ecommerce
 import random
 from datetime import datetime
 
-DB_PATH = 'database/ecommerce_data.db'
-
 LABEL_PREFIXES = [
     'LCR', 'SUMO',
     'STDR', 'KALA', 

@@ -22,7 +22,7 @@ class Users:
 
     def __str__(self) -> str:
     
-        return f'There are {self.get_count_users()} users in the database'
+        return f'There are {self.get_count_users()} users in the database.'
     
     def create(
         self,
@@ -59,6 +59,8 @@ class Users:
 
         self._add_to_db(users)
         
+        print(f'Adding {len(users)} user(s) to the database.')
+
         return users
 
     def get_count_users(self) -> int:
