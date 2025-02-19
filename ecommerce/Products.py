@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import random
 import csv
 import io
+import os
 
 from google_cloud import CloudSQLConnection, upload_to_bucket
 import sql_statements as sql
@@ -217,7 +218,7 @@ class Products:
         
         upload_data = csv_buffer.getvalue()
 
-        upload_to_bucket(f'product_reports/{file_path}', upload_data, 'srl_ecommerce')
+        upload_to_bucket(f'product_reports/{file_path}', upload_data, os.getenv('STORAGE_BUCKET_NAME'))
         
     def _initialise_db_table(self) -> None:
         

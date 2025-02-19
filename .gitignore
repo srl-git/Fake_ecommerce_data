@@ -2,6 +2,8 @@
 *.db
 TODO
 google_cloud/ServiceKey_GoogleCloud.json
+/.vscode/
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -3,6 +3,7 @@ import random
 import math
 import csv
 import io
+import os
 
 from google_cloud import CloudSQLConnection, upload_to_bucket
 from ecommerce.Products import Products
@@ -236,7 +237,7 @@ class Orders:
         
         upload_data = csv_buffer.getvalue()
 
-        upload_to_bucket(f'order_reports/{file_path}', upload_data, 'srl_ecommerce')
+        upload_to_bucket(f'order_reports/{file_path}', upload_data, os.getenv('STORAGE_BUCKET_NAME'))
             
     def _get_random_num_items(self, max_num_items) -> int:
 

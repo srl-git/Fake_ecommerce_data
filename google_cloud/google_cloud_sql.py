@@ -4,8 +4,6 @@ from google.cloud.sql.connector import Connector
 #  remove these lines before pushing to cloud run
 from dotenv import load_dotenv
 load_dotenv()
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'google_cloud/ServiceKey_GoogleCloud.json'
-
 #######
 
 class CloudSQLConnection:

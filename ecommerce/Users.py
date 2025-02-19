@@ -3,6 +3,7 @@ from unidecode import unidecode
 import random
 import csv
 import io
+import os
 
 from faker import Faker
 from faker.config import AVAILABLE_LOCALES
@@ -185,7 +186,7 @@ class Users:
         
         upload_data = csv_buffer.getvalue()
 
-        upload_to_bucket(f'user_reports/{file_path}', upload_data, 'srl_ecommerce')
+        upload_to_bucket(f'user_reports/{file_path}', upload_data, os.getenv('STORAGE_BUCKET_NAME'))
 
     def _create_email(self, name: str) -> str:
         email_prefix = unidecode(name.lower().replace(' ','').replace('.',''))
