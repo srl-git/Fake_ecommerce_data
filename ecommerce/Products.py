@@ -219,7 +219,6 @@ class Products:
 
         upload_to_bucket(f'product_reports/{file_path}', upload_data, 'srl_ecommerce')
         
-
     def _initialise_db_table(self) -> None:
         
         with CloudSQLConnection() as db:
