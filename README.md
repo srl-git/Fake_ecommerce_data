@@ -12,8 +12,8 @@ This tool is designed to create mock record label eCommerce data that simulates 
 - **Data Export:** Export data to CSV files in Cloud Storage, with the option for "messy" data that includes missing values and varied date formatting.
 
 ## Technologies Used
-- **Google Cloud Run**
-- **Cloud SQL**
-- **Cloud Storage**
-- **Cloud Secret Manager**
-- **Python**
+- Google Cloud Run
+- Cloud SQL
+- Cloud Storage
+- Cloud Secret Manager
+- Python
