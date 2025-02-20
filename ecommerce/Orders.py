@@ -59,7 +59,7 @@ class Orders:
     
     def _get_user_ids(self, users: Users, locales: list[str], num_orders: int) -> list[int]:
 
-        ratio_previous_users = random.uniform(0.0, 0.3)
+        ratio_previous_users = random.uniform(0.0, 0.1)
         num_previous_users = round(num_orders * ratio_previous_users)
         previous_users = users._get_random_users(num_previous_users)
         num_new_users = num_orders - len(previous_users)
