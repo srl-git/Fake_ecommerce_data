@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from ecommerce.Products import Products
-from ecommerce.Users import Users
-from ecommerce.Orders import Orders
+from Products import Products
+from Users import Users
+from Orders import Orders
 
 class Ecommerce:
     
