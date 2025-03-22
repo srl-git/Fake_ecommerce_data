@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from Products import Products
-from Users import Users
-from Orders import Orders
+from ecommerce_data_generator.Products import Products
+from ecommerce_data_generator.Users import Users
+from ecommerce_data_generator.Orders import Orders
 
 class Ecommerce:
     

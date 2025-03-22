@@ -1,4 +1,4 @@
-from Ecommerce import Ecommerce
+from ecommerce_data_generator.Ecommerce import Ecommerce
 import random
 from datetime import datetime
 

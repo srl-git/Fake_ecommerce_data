@@ -9,7 +9,7 @@ from faker import Faker
 from faker.config import AVAILABLE_LOCALES
 
 from google_cloud import CloudSQLConnection, upload_to_bucket
-import sql_statements as sql
+import ecommerce_data_generator.sql_statements as sql
 
 class Users:
 

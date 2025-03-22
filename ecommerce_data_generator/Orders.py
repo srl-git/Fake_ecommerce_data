@@ -6,9 +6,9 @@ import io
 import os
 
 from google_cloud import CloudSQLConnection, upload_to_bucket
-from Products import Products
-from Users import Users
-import sql_statements as sql
+from ecommerce_data_generator.Products import Products
+from ecommerce_data_generator.Users import Users
+import ecommerce_data_generator.sql_statements as sql
 
 class Orders:
     
