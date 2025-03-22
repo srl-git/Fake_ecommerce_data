@@ -24,27 +24,27 @@ def main():
 
     ecommerce = Ecommerce()
 
-    # wednesday = datetime.now().isoweekday() == 3
+    wednesday = datetime.now().isoweekday() == 3
 
-    # if wednesday:
-    #     ecommerce.products.create(
-    #                 label_prefix=random.choice(LABEL_PREFIXES),
-    #                 num_items=random.randint(1, 4),
-    #                 pricing=PRICING,
-    #             )
+    if wednesday:
+        ecommerce.products.create(
+                    label_prefix=random.choice(LABEL_PREFIXES),
+                    num_items=random.randint(1, 4),
+                    pricing=PRICING,
+                )
         
-    # ecommerce.create_orders_and_users(
-    #     locales=LOCALES,
-    #     num_orders=random.randint(3, 500),
-    #     max_num_items=7
-    # )
+    ecommerce.create_orders_and_users(
+        locales=LOCALES,
+        num_orders=random.randint(3, 500),
+        max_num_items=7
+    )
 
-    # ecommerce.to_csv(
-    #     start_date=datetime.now(),
-    #     messy_data=True,
-    #     local_file=False,
-    #     cloud_storage_file=True
-    # )
+    ecommerce.to_csv(
+        start_date=datetime.now(),
+        messy_data=True,
+        local_file=False,
+        cloud_storage_file=True
+    )
 
     print(ecommerce)
 

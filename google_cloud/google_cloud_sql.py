@@ -2,8 +2,8 @@ import os
 from google.cloud.sql.connector import Connector
 
 #  remove these lines before pushing to cloud run
-from dotenv import load_dotenv
-load_dotenv()
+# from dotenv import load_dotenv
+# load_dotenv()
 #######
 
 class CloudSQLConnection:
@@ -23,7 +23,6 @@ class CloudSQLConnection:
         self.connector = Connector(refresh_strategy="LAZY")
         self.connection = self.connector.connect(**self.config)
         self.cursor = self.connection.cursor()
-        self.cursor.execute("BEGIN TRANSACTION")
 
         return self
     
