@@ -1,10 +1,8 @@
 import os
 from google.cloud.sql.connector import Connector
+from dotenv import load_dotenv
 
-#  remove these lines before pushing to cloud run
-# from dotenv import load_dotenv
-# load_dotenv()
-#######
+load_dotenv()
 
 class CloudSQLConnection:
 
