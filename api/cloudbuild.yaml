@@ -2,8 +2,8 @@ steps:
 - name: "gcr.io/cloud-builders/docker"
   args:
   - build
-  - "--tag=gcr.io/$PROJECT_ID/ecommerce-data-generator-api:v1"
+  - "--tag=gcr.io/$PROJECT_ID/ecommerce-data-generator-api:$_TAG"
   - "--file=./api/Dockerfile"
   - .
 images:
-- "gcr.io/$PROJECT_ID/ecommerce-data-generator-api:v1"
+- "gcr.io/$PROJECT_ID/ecommerce-data-generator-api:$_TAG"
