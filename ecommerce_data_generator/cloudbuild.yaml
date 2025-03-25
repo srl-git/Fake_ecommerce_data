@@ -1,9 +1,15 @@
 steps:
-- name: "gcr.io/cloud-builders/docker"
-  args:
-  - build
-  - "--tag=gcr.io/$PROJECT_ID/ecommerce-data-generator:v3"
-  - "--file=./ecommerce_data_generator/Dockerfile"
-  - .
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - build
+      - "--tag=europe-west2-docker.pkg.dev/$PROJECT_ID/ecommerce/data-generator:$SHORT_SHA"
+      - "--file=./ecommerce_data_generator/Dockerfile"
+      - .
+    id: "build"
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - push
+      - "europe-west2-docker.pkg.dev/$PROJECT_ID/ecommerce/data-generator:$SHORT_SHA"
+    id: "push"
 images:
-- "gcr.io/$PROJECT_ID/ecommerce-data-generator:v3"
+  - "europe-west2-docker.pkg.dev/$PROJECT_ID/ecommerce/data-generator:$SHORT_SHA"
