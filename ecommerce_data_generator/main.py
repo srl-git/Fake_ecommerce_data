@@ -1,26 +1,18 @@
-from ecommerce_data_generator.Ecommerce import Ecommerce
 import random
 from datetime import datetime
 
-LABEL_PREFIXES = [
-    'LCR', 'SUMO',
-    'STDR', 'KALA', 
-    'GAS', 'PIL'
-]
+import yaml
 
-PRICING = [
-    18.0, 19.0,
-    20.0, 21.0
-]
+from ecommerce_data_generator.Ecommerce import Ecommerce
+import logger
 
-LOCALES = [
-    'en_GB', 'en_US', 'fr_FR',
-    'en_CA', 'de_DE', 'en_AU', 
-    'es_ES', 'fr_BE', 'it_IT', 
-    'ja_JP', 'nl_NL', 'pt_PT'
-]
+log = logger.get_logger(__name__)
+
 
 def main():
+
+    with open('ecommerce_data_generator/config.yaml', 'rt') as f:
+            config = yaml.safe_load(f.read())
 
     ecommerce = Ecommerce()
 
@@ -28,22 +20,19 @@ def main():
 
     if wednesday:
         ecommerce.products.create(
-                    label_prefix=random.choice(LABEL_PREFIXES),
-                    num_items=random.randint(1, 4),
-                    pricing=PRICING,
-                )
+                    num_items=random.randint(1, 6),
+                    label_prefix=random.choice(config.get('label_prefix')),
+                    pricing=config.get('pricing'),
+        )
         
-    ecommerce.create_orders_and_users(
-        locales=LOCALES,
-        num_orders=random.randint(3, 500),
-        max_num_items=7
+    ecommerce.create_orders(
+        num_orders=random.randint(3, 300),
+        **config.get('create_orders_and_users')
     )
 
     ecommerce.to_csv(
         start_date=datetime.now(),
-        messy_data=True,
-        local_file=False,
-        cloud_storage_file=True
+        **config.get('to_csv')
     )
 
     print(ecommerce)

@@ -1,10 +1,14 @@
+from datetime import date
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from datetime import date
+
 from google_cloud import CloudSQLConnection
+import logger
 
 app = FastAPI()
 
+log = logger.get_logger(__name__)
 
 class ProductQuery(BaseModel):
     

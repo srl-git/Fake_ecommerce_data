@@ -24,7 +24,7 @@ class Ecommerce:
 
         return f'There are {num_products} products, {num_users} users, and {num_orders} orders in the database'
     
-    def create_orders_and_users(
+    def create_orders(
         self, 
         locales: list[str], 
         num_orders: int,
@@ -47,7 +47,7 @@ class Ecommerce:
         local_file: bool = True,
         cloud_storage_file: bool = False
     ) -> None:
-                
+        
         self.products.to_csv(start_date, end_date, local_file, cloud_storage_file)
         self.users.to_csv(start_date, end_date, local_file, cloud_storage_file)
         self.orders.to_csv(start_date, end_date, messy_data, local_file, cloud_storage_file)
