@@ -23,7 +23,7 @@ def root():
 
 
 @app.get('/products')
-def get_products(date_updated: date | None = None) -> dict | None:
+def get_products(date_updated: date | None = None) -> list[dict] | None:
     where_clause = 'WHERE DATE(date_updated) = %s' if date_updated else ''
     sql_query = f'''
         SELECT 
