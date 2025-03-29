@@ -6,13 +6,20 @@ from pydantic import BaseModel
 from google_cloud import CloudSQLConnection
 import logger
 
-app = FastAPI()
 
 log = logger.get_logger(__name__)
+
+app = FastAPI(title='Fake Ecommerce Data')
+
 
 class ProductQuery(BaseModel):
     
     date_updated: date
+
+
+@app.get('/')
+def root():
+    return {"message": "Welcome to the Fake Ecommerce Data API"}
 
 
 @app.get('/products')
@@ -41,7 +48,7 @@ def get_products(date_updated: date | None = None) -> dict | None:
                 db.cursor.execute(sql_query)
             result = db.cursor.fetchone()
     except Exception as e:
-        print(f'Database error: {e}')
+        log.error(f'Database error: {e}')
         raise HTTPException(status_code=500, detail='Internal server error. Please try again later.')
                   
     if result and result[0]:
