@@ -2,14 +2,16 @@ steps:
   - name: "gcr.io/cloud-builders/docker"
     args:
       - build
-      - "--tag=europe-west2-docker.pkg.dev/$PROJECT_ID/ecommerce/api:$SHORT_SHA"
+      - "--tag=europe-west2-docker.pkg.dev/$PROJECT_ID/ecommerce/api:$_VERSION"
       - "--file=./api/Dockerfile"
       - .
     id: "build"
   - name: "gcr.io/cloud-builders/docker"
     args:
       - push
-      - "europe-west2-docker.pkg.dev/$PROJECT_ID/ecommerce/api:$SHORT_SHA"
+      - "europe-west2-docker.pkg.dev/$PROJECT_ID/ecommerce/api:$_VERSION"
     id: "push"
 images:
-  - "europe-west2-docker.pkg.dev/$PROJECT_ID/ecommerce/api:$SHORT_SHA"
+  - "europe-west2-docker.pkg.dev/$PROJECT_ID/ecommerce/api:$_VERSION"
+options:
+  bucket: 'gs://$PROJECT_ID-cloudbuild/api'
