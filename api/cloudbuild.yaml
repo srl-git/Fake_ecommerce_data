@@ -13,5 +13,3 @@ steps:
     id: "push"
 images:
   - "europe-west2-docker.pkg.dev/$PROJECT_ID/ecommerce/api:$_VERSION"
-options:
-  bucket: 'gs://$PROJECT_ID-cloudbuild/api'
