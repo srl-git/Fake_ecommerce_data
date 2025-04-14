@@ -1,7 +1,7 @@
 # Fake eCommerce Data Generator
 
 ## Overview
-This project is an exercise in generating semi-randomised but realistic fake data. The eCommerce Data Generator creates mock users, products, and orders that simulate real-world record label physical music sales. The data is output to daily CSV reports and made available through an API endpoint.
+This project is an exercise in generating semi-randomised but realistic sales data. The eCommerce Data Generator creates mock users, products, and orders that simulate real-world record label physical music sales. The data is output to daily CSV reports and made available through an API endpoint.
 The generated data serves as a foundation for building an ETL data pipeline in Google Cloud and developing dashboards with key metrics in Google Looker.
 
 
