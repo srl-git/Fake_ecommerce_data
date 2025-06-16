@@ -4,7 +4,7 @@ import random
 from dataclasses import astuple
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import Date, cast, func
+from sqlalchemy import func
 from sqlalchemy.sql import expression
 
 from data_generator.google_cloud_storage import upload_to_bucket
@@ -128,16 +128,20 @@ class Products:
             start_date,
             end_date,
         )
+        if start_date:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+
+        if end_date:
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+
         with get_session() as db:
             query = db.query(ProductsModel)
 
             if start_date:
-                query = query.filter(
-                    func.date(ProductsModel.date_created) >= cast(start_date, Date),
-                )
+                query = query.filter(func.date(ProductsModel.date_created) >= start_date)
 
             if end_date:
-                query = query.filter(func.date(ProductsModel.date_created) <= cast(end_date, Date))
+                query = query.filter(func.date(ProductsModel.date_created) <= end_date)
 
             if item_sku is not None:
                 if isinstance(item_sku, list):

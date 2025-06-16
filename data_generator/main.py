@@ -34,6 +34,7 @@ def main() -> None:
 
         ecommerce.to_csv(
             start_date=datetime.strftime(datetime.now(tz=timezone.utc), "%Y-%m-%d"),
+            end_date=datetime.strftime(datetime.now(tz=timezone.utc), "%Y-%m-%d"),
             **config.get("to_csv"),
         )
         log.info(ecommerce)

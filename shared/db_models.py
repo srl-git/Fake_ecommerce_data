@@ -87,7 +87,7 @@ class UsersModel(Base):
     user_address: Mapped[str] = mapped_column(Text)
     user_country: Mapped[str] = mapped_column(Text)
     user_email: Mapped[str] = mapped_column(Text)
-    date_created: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    date_created: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(tz=timezone.utc))
 
     def to_plain(self) -> User:
         """

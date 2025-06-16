@@ -5,7 +5,7 @@ import random
 from dataclasses import astuple
 from datetime import datetime, timezone
 
-from sqlalchemy import Date, cast, func
+from sqlalchemy import func
 
 from data_generator import Users
 from data_generator.google_cloud_storage import upload_to_bucket
@@ -213,14 +213,20 @@ class Orders:
             start_date,
             end_date,
         )
+        if start_date:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+
+        if end_date:
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+
         with get_session() as db:
             query = db.query(OrdersModel)
 
             if start_date:
-                query = query.filter(func.date(OrdersModel.date_created) >= cast(start_date, Date))
+                query = query.filter(func.date(OrdersModel.date_created) >= start_date)
 
             if end_date:
-                query = query.filter(func.date(OrdersModel.date_created) <= cast(end_date, Date))
+                query = query.filter(func.date(OrdersModel.date_created) <= end_date)
 
             if order_id is not None:
                 if isinstance(order_id, list):
