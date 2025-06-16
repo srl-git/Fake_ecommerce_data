@@ -5,3 +5,4 @@ google-cloud-storage==3.0.0
 uvicorn==0.34.0
 fastapi==0.115.11
 python-dotenv==1.0.1
+SQLAlchemy==2.0.41

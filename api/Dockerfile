@@ -8,8 +8,8 @@ WORKDIR /app
 COPY api/requirements.txt .
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
-COPY . /app
-COPY /google_cloud /app/google_cloud
+COPY /api /app/api
+COPY /shared /app/shared
 
 RUN adduser -u 5679 --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser

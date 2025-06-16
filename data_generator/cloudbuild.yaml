@@ -3,7 +3,7 @@ steps:
     args:
       - build
       - "--tag=europe-west2-docker.pkg.dev/$PROJECT_ID/ecommerce/data-generator:$_VERSION"
-      - "--file=./ecommerce_data_generator/Dockerfile"
+      - "--file=./data_generator/Dockerfile"
       - .
     id: "build"
   - name: "gcr.io/cloud-builders/docker"
