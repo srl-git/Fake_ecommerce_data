@@ -156,36 +156,27 @@ class Products:
         item_sku: str | list[str] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
-        *,
-        local_file: bool = True,
-        cloud_storage_file: bool = False,
+        timestamp: str = datetime.now(timezone.utc).strftime("%Y-%m-%d"),
     ) -> None:
         """
-        Export product data to a CSV file locally and/or to Google Cloud Storage.
+        Export product data to a CSV file locally and/or to Google Cloud Storage depending on the env config.
 
         Args:
             item_sku (str | list[str] | None, optional): The product catalogue number (item sku).
             start_date (str | None): Start date (inclusive) in 'YYYY-MM-DD' format.
             end_date (str | None): End date (inclusive) in 'YYYY-MM-DD' format.
-            local_file (bool): If True, save the CSV file locally.
-            cloud_storage_file (bool): If True, upload the CSV to a cloud storage bucket.
+            timestamp (str): The timestamp for the csv filename.
 
         """
         export_data = [astuple(product)[:-1] for product in self.get_products(item_sku, start_date, end_date)]
-        log.debug(
-            "Exporting %s products to CSV, local_file=%s, cloud_storage_file=%s",
-            len(export_data),
-            local_file,
-            cloud_storage_file,
-        )
-        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        log.debug("Exporting %s products to CSV.", len(export_data))
         file_path = f"Product_report_{timestamp}.csv"
 
         if len(export_data) == 0:
             return
-        if local_file:
+        if config.CSV_LOCAL_FILE:
             self._save_to_file(export_data, file_path)
-        if cloud_storage_file:
+        if config.CSV_CLOUD_STORAGE_FILE:
             self._save_to_cloud_storage(export_data, file_path)
 
     def _save_to_file(self, export_data: list[tuple], file_path: str) -> None:
@@ -255,7 +246,6 @@ class Products:
             f"product_reports/{file_path}",
             upload_data,
             config.STORAGE_BUCKET,
-            # os.getenv("STORAGE_BUCKET_NAME", ""),
         )
         log.debug("Uploaded product CSV to cloud storage: %s.", file_path)
 

@@ -29,7 +29,6 @@ def connect_with_cloud_sql_connector() -> sqlalchemy.engine.base.Engine:
     instance = os.environ["CLOUD_SQL_INSTANCE_NAME"]
     db_user = os.environ["CLOUD_SQL_USER"]
     db_pass = os.environ["CLOUD_SQL_PASSWORD"]
-    # db_name = os.environ["CLOUD_SQL_DATABASE"]
     connector = Connector(refresh_strategy="LAZY")
 
     def getconn():

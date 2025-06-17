@@ -13,6 +13,7 @@ locales:
   - 'pt_PT'
 
 create_products:
+  preorder_weeks: 6
   label_prefix:
     - 'LCR'
     - 'SUMO'
@@ -20,15 +21,9 @@ create_products:
     - 'KALA'
     - 'GAS'
     - 'PIL'
-  preorder_weeks: 6
   pricing:
     - 18.0
     - 19.0
     - 20.0
     - 21.0
     - 22.0
-
-to_csv:
-  messy_data: true
-  local_file: false
-  cloud_storage_file: true

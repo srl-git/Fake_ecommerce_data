@@ -45,12 +45,13 @@ class Users:
         self.locales = locales
         log.debug("Users initialized with locales: %s", self.locales)
 
-    def create(self, num_users: int) -> list[User] | None:
+    def create(self, num_users: int, date_created: datetime) -> list[User] | None:
         """
         Generates and adds fake users to the database.
 
         Args:
             num_users (int): Number of users to generate.
+            date_created (datetime): The date the user was created.
 
         Returns:
             list[User]: A list of created User dataclass instances.
@@ -78,6 +79,7 @@ class Users:
                 user_address=str(profile["address"]).replace("\n", ", "),
                 user_country=fake.current_country(),
                 user_email=self._create_email(user_name),
+                date_created=date_created,
             )
             user_models.append(user_model)
 
@@ -155,36 +157,27 @@ class Users:
         user_id: int | list[int] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
-        *,
-        local_file: bool = True,
-        cloud_storage_file: bool = False,
+        timestamp: str = datetime.now(timezone.utc).strftime("%Y-%m-%d"),
     ) -> None:
         """
-        Export user data to a CSV file locally and/or to Google Cloud Storage.
+        Export user data to a CSV file locally and/or to Google Cloud Storage depending on the env config.
 
         Args:
             user_id (int | list[int] | None): User ID or list of user IDs to filter.
             start_date (str | None): Start date (inclusive) in 'YYYY-MM-DD' format.
             end_date (str | None): End date (inclusive) in 'YYYY-MM-DD' format.
-            local_file (bool): If True, save the CSV file locally.
-            cloud_storage_file (bool): If True, upload the CSV to a cloud storage bucket.
+            timestamp (str): The timestamp for the csv filename.
 
         """
         export_data = self.get_users(user_id, start_date, end_date)
-        log.debug(
-            "Exporting %s users to CSV, local_file=%s, cloud_storage_file=%s",
-            len(export_data),
-            local_file,
-            cloud_storage_file,
-        )
-        timestamp = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
+        log.debug("Exporting %s users to CSV.", len(export_data))
         file_path = f"User_report_{timestamp}.csv"
 
         if len(export_data) == 0:
             return
-        if local_file:
+        if config.CSV_LOCAL_FILE:
             self._save_to_file(export_data, file_path)
-        if cloud_storage_file:
+        if config.CSV_CLOUD_STORAGE_FILE:
             self._save_to_cloud_storage(export_data, file_path)
 
     def _save_to_file(self, export_data: list[User], file_path: str) -> None:
@@ -254,7 +247,6 @@ class Users:
             f"user_reports/{file_path}",
             upload_data,
             config.STORAGE_BUCKET,
-            # os.getenv("STORAGE_BUCKET_NAME", ""),
         )
         log.debug("Uploaded user CSV to cloud storage: %s.", file_path)
 

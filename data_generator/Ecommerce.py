@@ -29,13 +29,14 @@ class Ecommerce:
 
         return f"There are {num_products} products, {num_users} users, and {num_orders} orders in the database."
 
-    def create_orders(self, num_orders: int, max_num_items: int) -> list[Order] | None:
+    def create_orders(self, num_orders: int, max_num_items: int, date_created: datetime) -> list[Order] | None:
         """
         Generates and adds fake orders to the database.
 
         Args:
             num_orders (int): Number of orders to generate.
             max_num_items (int): Maximum number of items in an order.
+            date_created (datetime): The date the order was created.
 
         Returns:
             list[Order] | None: A list of created Order dataclass instances.
@@ -45,6 +46,7 @@ class Ecommerce:
             users=self.users,
             num_orders=num_orders,
             max_num_items=max_num_items,
+            date_created=date_created,
         )
 
     def create_products(
@@ -84,38 +86,33 @@ class Ecommerce:
         self,
         start_date: str | None = None,
         end_date: str | None = None,
+        timestamp: str = datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         *,
         messy_data: bool = False,
-        local_file: bool = True,
-        cloud_storage_file: bool = False,
     ) -> None:
         """
-        Export product, user and order data to a CSV file locally and/or to Google Cloud Storage.
+        Export product, user and order data to a CSV file locally and/or to Google Cloud Storage depending on the env config.
 
         Args:
             start_date (str | None): Start date (inclusive) in 'YYYY-MM-DD' format.
             end_date (str | None): End date (inclusive) in 'YYYY-MM-DD' format.
             messy_data (bool): If True, introduces a randomised amount of 'dirty' data to the order data.
-            local_file (bool): If True, save the CSV file locally.
-            cloud_storage_file (bool): If True, upload the CSV to a cloud storage bucket.
+            timestamp (str): The timestamp for the csv filename.
 
         """
         self.products.to_csv(
             start_date=start_date,
             end_date=end_date,
-            local_file=local_file,
-            cloud_storage_file=cloud_storage_file,
+            timestamp=timestamp,
         )
         self.users.to_csv(
             start_date=start_date,
             end_date=end_date,
-            local_file=local_file,
-            cloud_storage_file=cloud_storage_file,
+            timestamp=timestamp,
         )
         self.orders.to_csv(
             start_date=start_date,
             end_date=end_date,
+            timestamp=timestamp,
             messy_data=messy_data,
-            local_file=local_file,
-            cloud_storage_file=cloud_storage_file,
         )

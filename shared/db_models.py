@@ -81,8 +81,7 @@ class ProductsModel(Base):
 
 class UsersModel(Base):
     __tablename__ = "users"
-    __table_args__ = (PrimaryKeyConstraint("user_id", name="users_pkey"),)
-    user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
     user_name: Mapped[str] = mapped_column(Text)
     user_address: Mapped[str] = mapped_column(Text)
     user_country: Mapped[str] = mapped_column(Text)
@@ -115,12 +114,11 @@ class OrdersModel(Base):
             ["users.user_id"],
             name="orders_user_id_fkey",
         ),
-        PrimaryKeyConstraint("order_line_id", name="orders_pkey"),
     )
     order_line_id: Mapped[int] = mapped_column(
         Integer,
-        primary_key=True,
         autoincrement=True,
+        primary_key=True,
     )
     order_id: Mapped[int] = mapped_column(Integer)
     user_id: Mapped[int] = mapped_column(Integer)

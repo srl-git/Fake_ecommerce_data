@@ -26,6 +26,7 @@ class Orders:
         users: Users,
         num_orders: int,
         max_num_items: int,
+        date_created: datetime,
     ) -> list[Order] | None:
         """
         Generates and adds fake orders to the database.
@@ -34,6 +35,7 @@ class Orders:
             users (Users): An instance of the Users class.
             num_orders (int): Number of orders to generate.
             max_num_items (int): Maximum number of items in an order.
+            date_created (datetime): The date the order was created.
 
         Returns:
             list[Order] | None: A list of created Order dataclass instances.
@@ -47,12 +49,13 @@ class Orders:
         log.debug("Generating %s orders.", num_orders)
 
         products = self._get_active_products()
-        user_ids = self._get_user_ids(users, num_orders)
+        user_ids = self._get_user_ids(users, num_orders, date_created)
         order_models = self._generate_order_lines(
             products,
             user_ids,
             num_orders,
             max_num_items,
+            date_created,
         )
 
         with get_session() as db:
@@ -97,13 +100,14 @@ class Orders:
         )
         return active_products
 
-    def _get_user_ids(self, users: Users, num_orders: int) -> list[int]:
+    def _get_user_ids(self, users: Users, num_orders: int, date_created: datetime) -> list[int]:
         """
         Generate a list of new and existing user IDs for orders, weighted towards new users to simulate realistics user activity.
 
         Args:
             users (Users): An instance of the Users class.
             num_orders (int): The number of orders to generate.
+            date_created (datetime): The date the user was created.
 
         Returns:
             list[int]: A list of unique user_ids.
@@ -116,7 +120,7 @@ class Orders:
             previous_users_ids = [user.user_id for user in previous_users]
 
         num_new_users = num_orders - len(previous_users_ids)
-        new_users = users.create(num_new_users)
+        new_users = users.create(num_new_users, date_created)
         new_users_ids = [user.user_id for user in new_users]
         all_users_ids = previous_users_ids + new_users_ids
         random.shuffle(all_users_ids)
@@ -129,6 +133,7 @@ class Orders:
         user_ids: list[int],
         num_orders: int,
         max_num_items: int,
+        date_created: datetime,
     ) -> list[OrdersModel]:
         """
         Creates order lines by assigning random products and quantities to a series of user orders.
@@ -140,6 +145,7 @@ class Orders:
             user_ids (list[int]): A list of user IDs.
             num_orders (int): The total number of orders to generate.
             max_num_items (int): Maximum number of items allowed per order.
+            date_created (datetime): The date the order was created.
 
         Returns:
             list[OrdersModel]: A list of OrdersModel instances representing all order lines across the generated orders.
@@ -172,6 +178,7 @@ class Orders:
                     item_sku=item_sku,
                     qty=qty,
                     item_price=price,
+                    date_created=date_created,
                 )
                 order_models.append(order_line)
 
@@ -279,41 +286,36 @@ class Orders:
         order_id: int | list[int] | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
+        timestamp: str = datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         *,
         messy_data: bool = False,
-        local_file: bool = True,
-        cloud_storage_file: bool = False,
     ) -> None:
         """
-        Export order data to a CSV file locally and/or to Google Cloud Storage.
+        Export order data to a CSV file locally and/or to Google Cloud Storage depending on the env config.
 
         Args:
             order_id (int | list[int] | None): An order ID or list of order ID's.
             start_date (str | None): Start date (inclusive) in 'YYYY-MM-DD' format.
             end_date (str | None): End date (inclusive) in 'YYYY-MM-DD' format.
+            timestamp (str): The timestamp for the csv filename.
             messy_data (bool): If True, introduces a randomised amount of 'dirty' data to the order data.
-            local_file (bool): If True, save the CSV file locally.
-            cloud_storage_file (bool): If True, upload the CSV to a cloud storage bucket.
 
         """
         export_data = self.get_orders(order_id, start_date, end_date)
         log.debug(
-            "Exporting %s orders to CSV, messy_data=%s, local_file=%s, cloud_storage_file=%s",
+            "Exporting %s orders to CSV, messy_data=%s",
             len(export_data),
             messy_data,
-            local_file,
-            cloud_storage_file,
         )
-        timestamp = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
         file_path = f"Order_report_{timestamp}.csv"
 
         if len(export_data) == 0:
             return
         if messy_data:
             export_data = self._introduce_messy_data(export_data)
-        if local_file:
+        if config.CSV_LOCAL_FILE:
             self._save_to_file(export_data, file_path)
-        if cloud_storage_file:
+        if config.CSV_CLOUD_STORAGE_FILE:
             self._save_to_cloud_storage(export_data, file_path)
 
     def _save_to_file(self, export_data: list[Order] | list[tuple], file_path: str) -> None:
@@ -395,7 +397,6 @@ class Orders:
             f"order_reports/{file_path}",
             upload_data,
             config.STORAGE_BUCKET,
-            # os.getenv("STORAGE_BUCKET_NAME", ""),
         )
         log.debug("Uploaded order CSV to cloud storage: %s.", file_path)
 
